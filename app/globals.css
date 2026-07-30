@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: #0a0a0b;
+}
+
+::selection {
+  background: rgba(201, 162, 39, 0.35);
+  color: #ffffff;
+}
+
+/* Hairline grid texture used behind hero / section openers, matching the
+   reference's low-opacity line grid. Applied via <GridOverlay /> component. */
+.grid-overlay {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+  background-size: 8.33% 12.5%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Visible keyboard focus, kept deliberately - never remove outline without replacing it */
+:focus-visible {
+  outline: 2px solid #c9a227;
+  outline-offset: 2px;
+}

@@ -111,3 +111,50 @@ export const DEFAULT_THRESHOLDS: Record<RVCInput["method"], number> = {
   "transaction-value": 60,
   "net-cost": 50,
 };
+
+/**
+ * De minimis check (USMCA Article 4.12).
+ *
+ * This is NOT an alternative RVC threshold. De minimis is a separate
+ * allowance that applies when a good fails a required tariff-shift test:
+ * if the non-originating materials that caused the failure are worth no
+ * more than 10% of the good's value, the good can still be treated as
+ * originating for tariff-shift purposes. Those materials still count as
+ * non-originating in the RVC calculation above - de minimis does not
+ * change that number. This tool doesn't perform tariff-shift analysis, so
+ * treat this as a supporting reference check, not a determination.
+ */
+export interface DeMinimisResult {
+  nonOriginatingValue: number;
+  transactionValue: number;
+  nonOriginatingPercent: number;
+  withinDeMinimis: boolean;
+  thresholdPercent: number;
+  notes: string[];
+}
+
+export function checkDeMinimis(input: {
+  transactionValue: number;
+  lineItems: BOMLineItem[];
+}): DeMinimisResult {
+  const nonOriginatingValue = input.lineItems
+    .filter((item) => !item.originating)
+    .reduce((sum, item) => sum + item.value, 0);
+
+  const thresholdPercent = 10;
+  const nonOriginatingPercent =
+    input.transactionValue > 0 ? (nonOriginatingValue / input.transactionValue) * 100 : 0;
+
+  return {
+    nonOriginatingValue,
+    transactionValue: input.transactionValue,
+    nonOriginatingPercent: round2(nonOriginatingPercent),
+    withinDeMinimis: nonOriginatingPercent <= thresholdPercent,
+    thresholdPercent,
+    notes: [
+      "De minimis applies to materials that fail a required tariff-shift test - it doesn't raise your RVC threshold, and these materials still count as non-originating in the RVC result above.",
+      "Textiles and apparel (HS chapters 50-63) use a different, weight-based de minimis test instead of this value-based one.",
+      "Certain dairy products and infant formula used as inputs are excluded from de minimis treatment entirely.",
+    ],
+  };
+}

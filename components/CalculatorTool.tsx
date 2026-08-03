@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   calculateRVC,
+  checkDeMinimis,
   emptyLineItem,
   DEFAULT_THRESHOLDS,
   type BOMLineItem,
   type RVCResult,
+  type DeMinimisResult,
 } from "@/lib/rvc-calculator";
 import {
   checksRemaining,
@@ -16,6 +18,9 @@ import {
   storeLicenseKey,
 } from "@/lib/trial";
 import { generateCertificatePDF, type CertifierInfo } from "@/lib/certificate-pdf";
+import { generateAuditWorksheetPDF } from "@/lib/audit-worksheet-pdf";
+import { parseBOMCsv, downloadBomTemplate } from "@/lib/csv-import";
+import { listSavedBOMs, saveBOM, deleteSavedBOM, type SavedBOM } from "@/lib/saved-boms";
 
 let idCounter = 0;
 const newId = () => `li_${++idCounter}_${Date.now()}`;
@@ -27,6 +32,7 @@ export default function CalculatorTool() {
   const [threshold, setThreshold] = useState<number>(DEFAULT_THRESHOLDS["transaction-value"]);
   const [lineItems, setLineItems] = useState<BOMLineItem[]>([emptyLineItem(newId()), emptyLineItem(newId())]);
   const [result, setResult] = useState<RVCResult | null>(null);
+  const [deMinimis, setDeMinimis] = useState<DeMinimisResult | null>(null);
 
   const [licensed, setLicensed] = useState(false);
   const [checkingLicense, setCheckingLicense] = useState(true);
@@ -49,8 +55,18 @@ export default function CalculatorTool() {
     blanketPeriodEnd: "",
   });
 
+  // CSV import
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [csvErrors, setCsvErrors] = useState<string[]>([]);
+
+  // Saved BOMs
+  const [savedBOMs, setSavedBOMs] = useState<SavedBOM[]>([]);
+  const [showSaved, setShowSaved] = useState(false);
+  const [saveName, setSaveName] = useState("");
+
   useEffect(() => {
     setRemaining(checksRemaining());
+    setSavedBOMs(listSavedBOMs());
     const key = getStoredLicenseKey();
     if (!key) {
       setCheckingLicense(false);
@@ -93,6 +109,7 @@ export default function CalculatorTool() {
       lineItems,
     });
     setResult(r);
+    setDeMinimis(checkDeMinimis({ transactionValue, lineItems }));
     if (!licensed) {
       recordCheckUsed();
       setRemaining(checksRemaining());
@@ -118,13 +135,57 @@ export default function CalculatorTool() {
   async function handleDownloadCertificate() {
     if (!result) return;
     const bytes = await generateCertificatePDF(productName || "Untitled product", lineItems, result, certInfo);
-    const blob = new Blob([bytes as unknown as BlobPart], { type: "application/pdf" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${(productName || "origynlx-draft-certificate").replace(/\s+/g, "-").toLowerCase()}.pdf`;
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadPdf(bytes, `${slug(productName || "origynlx-draft-certificate")}.pdf`);
+  }
+
+  async function handleDownloadWorksheet() {
+    if (!result) return;
+    const bytes = await generateAuditWorksheetPDF(productName || "Untitled product", lineItems, result, deMinimis);
+    downloadPdf(bytes, `${slug(productName || "origynlx-worksheet")}-worksheet.pdf`);
+  }
+
+  function handleCsvFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const { items, errors } = parseBOMCsv(String(reader.result || ""));
+      setCsvErrors(errors);
+      if (items.length > 0) {
+        setLineItems(items);
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = ""; // allow re-selecting the same file later
+  }
+
+  function handleSaveBOM() {
+    const record = saveBOM(saveName || productName, {
+      productName,
+      transactionValue,
+      method,
+      threshold,
+      lineItems,
+    });
+    setSavedBOMs(listSavedBOMs());
+    setSaveName("");
+    void record;
+  }
+
+  function handleLoadBOM(b: SavedBOM) {
+    setProductName(b.productName);
+    setTransactionValue(b.transactionValue);
+    setMethod(b.method);
+    setThreshold(b.threshold);
+    setLineItems(b.lineItems);
+    setResult(null);
+    setDeMinimis(null);
+    setShowSaved(false);
+  }
+
+  function handleDeleteBOM(id: string) {
+    deleteSavedBOM(id);
+    setSavedBOMs(listSavedBOMs());
   }
 
   const blocked = !licensed && remaining <= 0;
@@ -138,9 +199,7 @@ export default function CalculatorTool() {
         ) : licensed ? (
           <p className="text-sm text-pass">License active — unlimited checks and certificates.</p>
         ) : (
-          <p className="text-sm text-paper/70">
-            {remaining} of 5 free checks remaining this browser.
-          </p>
+          <p className="text-sm text-paper/70">{remaining} of 5 free checks remaining this browser.</p>
         )}
         {!licensed && (
           <div className="flex items-center gap-2">
@@ -160,6 +219,52 @@ export default function CalculatorTool() {
         )}
       </div>
       {licenseError && <p className="text-[13px] text-fail">{licenseError}</p>}
+
+      {/* Saved products */}
+      <div className="rounded-card border border-white/12 bg-white/[0.03] p-5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2">
+            <input
+              value={saveName}
+              onChange={(e) => setSaveName(e.target.value)}
+              placeholder="Name this product to save it"
+              className="rounded-lg border border-white/15 bg-white/[0.02] px-3 py-2 text-sm text-paper placeholder:text-paper/30 outline-none focus:border-seal/60"
+            />
+            <button
+              onClick={handleSaveBOM}
+              className="rounded-lg border border-white/20 px-3 py-2 text-sm text-paper/80 hover:border-seal/60 hover:text-paper transition-colors"
+            >
+              Save
+            </button>
+          </div>
+          {savedBOMs.length > 0 && (
+            <button
+              onClick={() => setShowSaved((v) => !v)}
+              className="text-[13px] font-medium text-seal hover:text-seal/80 transition-colors"
+            >
+              {showSaved ? "Hide" : `Saved products (${savedBOMs.length})`}
+            </button>
+          )}
+        </div>
+        <p className="mt-2 text-[12px] text-paper/40">Saved to this browser only — nothing is sent anywhere.</p>
+
+        {showSaved && (
+          <div className="mt-4 space-y-2 border-t border-white/10 pt-4">
+            {savedBOMs.map((b) => (
+              <div key={b.id} className="flex items-center justify-between rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2">
+                <div>
+                  <p className="text-sm text-paper">{b.name}</p>
+                  <p className="text-[12px] text-paper/40">{new Date(b.savedAt).toLocaleDateString()} • {b.lineItems.length} line items</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <button onClick={() => handleLoadBOM(b)} className="text-[13px] font-medium text-seal hover:text-seal/80 transition-colors">Load</button>
+                  <button onClick={() => handleDeleteBOM(b.id)} className="text-[13px] text-paper/40 hover:text-fail transition-colors">Delete</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Product + transaction inputs */}
       <div className="rounded-card border border-white/12 bg-white/[0.03] p-6 sm:p-8 space-y-6">
@@ -210,12 +315,30 @@ export default function CalculatorTool() {
 
         {/* BOM table */}
         <div>
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
             <label className="text-[13px] font-medium text-paper/60">Bill of materials</label>
-            <button onClick={addItem} className="text-[13px] font-medium text-seal hover:text-seal/80 transition-colors">
-              + Add line item
-            </button>
+            <div className="flex items-center gap-4">
+              <button onClick={downloadBomTemplate} className="text-[13px] font-medium text-paper/60 hover:text-paper transition-colors">
+                Download CSV template
+              </button>
+              <button onClick={() => fileInputRef.current?.click()} className="text-[13px] font-medium text-paper/60 hover:text-paper transition-colors">
+                Import CSV
+              </button>
+              <input ref={fileInputRef} type="file" accept=".csv,text/csv" onChange={handleCsvFile} className="hidden" />
+              <button onClick={addItem} className="text-[13px] font-medium text-seal hover:text-seal/80 transition-colors">
+                + Add line item
+              </button>
+            </div>
           </div>
+
+          {csvErrors.length > 0 && (
+            <div className="mb-3 space-y-1">
+              {csvErrors.map((e, i) => (
+                <p key={i} className="text-[12px] text-fail">{e}</p>
+              ))}
+            </div>
+          )}
+
           <div className="space-y-2">
             {lineItems.map((item) => (
               <div key={item.id} className="grid grid-cols-12 gap-2 items-center">
@@ -313,7 +436,30 @@ export default function CalculatorTool() {
             </div>
           )}
 
-          <div className="mt-6">
+          {deMinimis && (
+            <div className="mt-6 rounded-lg border border-white/10 bg-white/[0.02] p-5">
+              <div className="flex items-center justify-between">
+                <span className="text-[13px] font-medium uppercase tracking-[0.08em] text-paper/50">
+                  De minimis reference check
+                </span>
+                <span className={`text-sm font-semibold ${deMinimis.withinDeMinimis ? "text-pass" : "text-fail"}`}>
+                  {deMinimis.nonOriginatingPercent}% {deMinimis.withinDeMinimis ? "— within 10% allowance" : "— exceeds 10% allowance"}
+                </span>
+              </div>
+              <p className="mt-3 text-[13px] leading-relaxed text-paper/55">
+                This only matters if your product also needs a tariff-shift test and some inputs fail it — it
+                does not change the RVC result above, and those materials still count as non-originating there.
+              </p>
+            </div>
+          )}
+
+          <div className="mt-6 flex flex-wrap gap-3">
+            <button
+              onClick={handleDownloadWorksheet}
+              className="rounded-full border border-white/20 px-6 py-2.5 text-sm text-paper/80 hover:border-seal/60 hover:text-paper transition-colors"
+            >
+              Download worksheet (PDF)
+            </button>
             {!showCert ? (
               <button
                 onClick={() => setShowCert(true)}
@@ -322,10 +468,14 @@ export default function CalculatorTool() {
               >
                 {licensed ? "Prepare draft certificate" : "Unlock a license to generate certificates"}
               </button>
-            ) : (
-              <CertificateForm certInfo={certInfo} setCertInfo={setCertInfo} onDownload={handleDownloadCertificate} />
-            )}
+            ) : null}
           </div>
+
+          {showCert && (
+            <div className="mt-4">
+              <CertificateForm certInfo={certInfo} setCertInfo={setCertInfo} onDownload={handleDownloadCertificate} />
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -379,4 +529,18 @@ function CertificateForm({
       </button>
     </div>
   );
+}
+
+function downloadPdf(bytes: Uint8Array, filename: string) {
+  const blob = new Blob([bytes as unknown as BlobPart], { type: "application/pdf" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function slug(str: string): string {
+  return str.replace(/\s+/g, "-").toLowerCase();
 }

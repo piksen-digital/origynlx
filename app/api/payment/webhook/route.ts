@@ -1,17 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import { decryptPesepayWebhookBody } from "@/lib/pesepay";
-import { activateLicense, markLicenseFailed } from "@/lib/license";
-import { Resend } from "resend";
+import { activateLicense, markLicenseFailed, sendLicenseEmail } from "@/lib/license";
 
 /**
  * Pesepay calls this URL server-to-server once a payment resolves (the
- * resultUrl we send at initiate time). We decrypt the body the same way we
- * decrypt the initiate response, then activate or fail the license record.
+ * resultUrl we send at initiate time). This is a best-effort fast path -
+ * /api/payment/verify actively polls Pesepay too, so a purchase still
+ * completes correctly even if this webhook never arrives or the payload
+ * shape here turns out to be wrong. Don't remove this once verify's
+ * polling is confirmed working - a working webhook is still faster than
+ * waiting for the next poll interval.
  *
- * VERIFY BEFORE GOING LIVE: confirm the exact field names Pesepay sends here
- * (transactionStatus vs status, paid vs PAID, etc.) against a real sandbox
- * transaction - this handler checks several likely variants defensively,
- * but Pesepay's dashboard/docs are the source of truth.
+ * VERIFY BEFORE GOING LIVE: confirm the exact field names Pesepay sends
+ * here against a real sandbox transaction.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -38,21 +39,8 @@ export async function POST(req: NextRequest) {
     const isSuccess = ["SUCCESS", "SUCCESSFUL", "PAID", "COMPLETE", "COMPLETED"].includes(rawStatus);
 
     if (isSuccess) {
-      const record = await activateLicense(merchantReference, pesepayReferenceNumber || "unknown");
-
-      if (record.email && process.env.RESEND_API_KEY) {
-        try {
-          const resend = new Resend(process.env.RESEND_API_KEY);
-          await resend.emails.send({
-            from: process.env.CONTACT_FROM_EMAIL || "OrigynLX <onboarding@resend.dev>",
-            to: record.email,
-            subject: "Your OrigynLX license key",
-            text: `Thanks for your purchase.\n\nYour license key: ${record.licenseKey}\n\nEnter it at ${process.env.NEXT_PUBLIC_SITE_URL}/calculator to unlock unlimited checks and certificates.`,
-          });
-        } catch (emailErr) {
-          console.error("Failed to send license email:", emailErr);
-        }
-      }
+      const { record, justActivated } = await activateLicense(merchantReference, pesepayReferenceNumber || "unknown");
+      if (justActivated) await sendLicenseEmail(record);
     } else {
       await markLicenseFailed(merchantReference);
     }

@@ -17,15 +17,18 @@ export default function PaymentSuccessPage() {
 function PaymentSuccessInner() {
   const params = useSearchParams();
   const ref = params.get("ref");
-  const [status, setStatus] = useState<"pending" | "active" | "failed" | "unknown">("pending");
+  const [status, setStatus] = useState<"pending" | "active" | "failed" | "unknown" | "timeout">("pending");
   const [licenseKey, setLicenseKey] = useState<string | null>(null);
+  const [retryKey, setRetryKey] = useState(0);
 
   useEffect(() => {
     if (!ref) {
       setStatus("unknown");
       return;
     }
+    setStatus((s) => (s === "timeout" ? "pending" : s));
     let attempts = 0;
+    const maxAttempts = 15; // ~90s at 6s each - each call now also hits Pesepay, so a bit more spacing
     const interval = setInterval(async () => {
       attempts += 1;
       try {
@@ -43,11 +46,14 @@ function PaymentSuccessInner() {
       } catch {
         // keep polling
       }
-      if (attempts > 20) clearInterval(interval); // ~60s ceiling
-    }, 3000);
+      if (attempts >= maxAttempts) {
+        clearInterval(interval);
+        setStatus((s) => (s === "pending" ? "timeout" : s));
+      }
+    }, 6000);
 
     return () => clearInterval(interval);
-  }, [ref]);
+  }, [ref, retryKey]);
 
   return (
     <main className="relative min-h-screen overflow-x-hidden bg-ink">
@@ -80,6 +86,26 @@ function PaymentSuccessInner() {
               <a href="/pricing" className="mt-8 inline-flex items-center justify-center rounded-full border border-white/20 text-paper text-sm font-medium px-8 h-12 hover:border-paper/40 transition-colors">
                 Back to pricing
               </a>
+            </>
+          )}
+          {status === "timeout" && (
+            <>
+              <h1 className="font-display text-3xl font-semibold text-paper">Still confirming — this is taking longer than usual.</h1>
+              <p className="mt-3 text-paper/60 max-w-md mx-auto">
+                If your card was charged, this will usually resolve on its own shortly. Keep this reference handy if you contact us:
+              </p>
+              <p className="mt-2 font-mono text-sm text-seal">{ref}</p>
+              <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+                <button
+                  onClick={() => setRetryKey((k) => k + 1)}
+                  className="inline-flex items-center justify-center rounded-full bg-seal text-ink text-sm font-semibold px-8 h-12 hover:bg-seal/90 transition-colors"
+                >
+                  Check again
+                </button>
+                <a href="/contact" className="inline-flex items-center justify-center rounded-full border border-white/20 text-paper text-sm font-medium px-8 h-12 hover:border-paper/40 transition-colors">
+                  Contact us
+                </a>
+              </div>
             </>
           )}
           {status === "unknown" && (

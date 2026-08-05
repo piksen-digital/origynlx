@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { initiatePesepayTransaction } from "@/lib/pesepay";
-import { createPendingLicense, generateMerchantReference } from "@/lib/license";
+import { createPendingLicense, generateMerchantReference, attachPesepayTracking } from "@/lib/license";
 
 const PRICE_USD = Number(process.env.LICENSE_PRICE_USD || 149);
 
@@ -31,6 +31,8 @@ export async function POST(req: NextRequest) {
       resultUrl: `${siteUrl}/api/payment/webhook`,
       returnUrl: `${siteUrl}/payment/success?ref=${merchantReference}`,
     });
+
+    await attachPesepayTracking(merchantReference, result.referenceNumber, result.pollUrl);
 
     return NextResponse.json({ redirectUrl: result.redirectUrl, merchantReference });
   } catch (err: any) {

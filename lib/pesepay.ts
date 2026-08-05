@@ -129,3 +129,67 @@ export function decryptPesepayWebhookBody(rawPayload: string) {
   const { encryptionKey } = getConfig();
   return decryptPayload(rawPayload, encryptionKey);
 }
+
+export interface PesepayStatusResult {
+  status: "success" | "failed" | "pending";
+  raw: any;
+}
+
+/**
+ * Actively asks Pesepay for a transaction's current status, rather than
+ * waiting for the resultUrl webhook to arrive. This is the more reliable
+ * of the two confirmation paths - webhooks can be delayed, misconfigured,
+ * or never fire at all, but a direct status check has nowhere to hide.
+ *
+ * Uses the pollUrl returned at initiate time if we have it (preferred).
+ * Falls back to PESEPAY_CHECK_STATUS_URL_* + referenceNumber if not.
+ * VERIFY the exact endpoint and field names against your Pesepay
+ * dashboard/docs - same caveat as the webhook payload shape.
+ */
+export async function checkPesepayTransactionStatus(
+  referenceNumber: string,
+  pollUrl?: string
+): Promise<PesepayStatusResult> {
+  const { integrationKey, encryptionKey, env } = getConfig();
+
+  const url =
+    pollUrl ||
+    (env === "production"
+      ? process.env.PESEPAY_CHECK_STATUS_URL_PRODUCTION
+      : process.env.PESEPAY_CHECK_STATUS_URL_SANDBOX);
+
+  if (!url) {
+    throw new Error(
+      "No pollUrl available and no PESEPAY_CHECK_STATUS_URL configured for this environment."
+    );
+  }
+
+  const separator = url.includes("?") ? "&" : "?";
+  const response = await fetch(`${url}${separator}referenceNumber=${encodeURIComponent(referenceNumber)}`, {
+    method: "GET",
+    headers: { authorization: integrationKey },
+  });
+
+  if (!response.ok) {
+    const text = await response.text().catch(() => "");
+    throw new Error(`Pesepay status check failed (${response.status}): ${text}`);
+  }
+
+  const body = await response.json();
+  if (!body?.payload) {
+    throw new Error("Pesepay status response did not include an encrypted payload.");
+  }
+
+  const decrypted = decryptPayload(body.payload, encryptionKey);
+  const rawStatus = String(decrypted?.transactionStatus || decrypted?.status || "").toUpperCase();
+
+  const status: PesepayStatusResult["status"] = ["SUCCESS", "SUCCESSFUL", "PAID", "COMPLETE", "COMPLETED"].includes(
+    rawStatus
+  )
+    ? "success"
+    : ["FAILED", "CANCELLED", "DECLINED"].includes(rawStatus)
+      ? "failed"
+      : "pending";
+
+  return { status, raw: decrypted };
+}

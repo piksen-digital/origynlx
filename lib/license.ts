@@ -1,4 +1,5 @@
 import { Redis } from "@upstash/redis";
+import { Resend } from "resend";
 
 const kv = new Redis({
   url: process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL || "",
@@ -20,7 +21,9 @@ export interface LicenseRecord {
   amount: number;
   currencyCode: string;
   pesepayReferenceNumber?: string;
+  pesepayPollUrl?: string;
   licenseKey?: string;
+  emailSentAt?: string;
   createdAt: string;
   activatedAt?: string;
 }
@@ -44,11 +47,40 @@ export async function createPendingLicense(record: {
   await kv.set(keyFor(record.merchantReference), value);
 }
 
+/**
+ * Called right after Pesepay's initiate call returns, before the customer
+ * even reaches the checkout page. Stores the reference/poll URL so verify
+ * can later ask Pesepay directly "did this succeed?" instead of only
+ * waiting on the resultUrl webhook.
+ */
+export async function attachPesepayTracking(
+  merchantReference: string,
+  pesepayReferenceNumber: string,
+  pollUrl?: string
+): Promise<void> {
+  const existing = await kv.get<LicenseRecord>(keyFor(merchantReference));
+  if (!existing) return;
+  await kv.set(keyFor(merchantReference), {
+    ...existing,
+    pesepayReferenceNumber,
+    pesepayPollUrl: pollUrl,
+  });
+}
+
+/**
+ * Idempotent: safe to call from both the webhook and the poll-based verify
+ * path without generating two license keys or sending two emails for the
+ * same purchase. Returns justActivated=false on the second call.
+ */
 export async function activateLicense(
   merchantReference: string,
   pesepayReferenceNumber: string
-): Promise<LicenseRecord> {
+): Promise<{ record: LicenseRecord; justActivated: boolean }> {
   const existing = (await kv.get<LicenseRecord>(keyFor(merchantReference))) || ({} as Partial<LicenseRecord>);
+
+  if (existing.status === "active" && existing.licenseKey) {
+    return { record: existing as LicenseRecord, justActivated: false };
+  }
 
   const licenseKey = generateLicenseKey();
 
@@ -59,26 +91,28 @@ export async function activateLicense(
     currencyCode: existing.currencyCode ?? "USD",
     email: existing.email,
     pesepayReferenceNumber,
+    pesepayPollUrl: existing.pesepayPollUrl,
     licenseKey,
     createdAt: existing.createdAt ?? new Date().toISOString(),
     activatedAt: new Date().toISOString(),
   };
 
   await kv.set(keyFor(merchantReference), value);
-  // Also index by license key so /license lookups don't need the merchant reference
   await kv.set(`licensekey:${licenseKey}`, merchantReference);
 
-  return value;
+  return { record: value, justActivated: true };
 }
 
 export async function markLicenseFailed(merchantReference: string): Promise<void> {
   const existing = (await kv.get<LicenseRecord>(keyFor(merchantReference))) || ({} as Partial<LicenseRecord>);
+  if (existing.status === "active") return; // never downgrade an active license
   const value: LicenseRecord = {
     merchantReference,
     status: "failed",
     amount: existing.amount ?? 0,
     currencyCode: existing.currencyCode ?? "USD",
     email: existing.email,
+    pesepayPollUrl: existing.pesepayPollUrl,
     createdAt: existing.createdAt ?? new Date().toISOString(),
   };
   await kv.set(keyFor(merchantReference), value);
@@ -95,6 +129,26 @@ export async function getLicenseByKey(licenseKey: string): Promise<LicenseRecord
   const merchantReference = await kv.get<string>(`licensekey:${licenseKey}`);
   if (!merchantReference) return null;
   return getLicenseByReference(merchantReference);
+}
+
+/**
+ * Sends the license key email exactly once per activation - call this only
+ * when activateLicense() just returned justActivated=true.
+ */
+export async function sendLicenseEmail(record: LicenseRecord): Promise<void> {
+  if (!record.email || !record.licenseKey || !process.env.RESEND_API_KEY) return;
+  try {
+    const resend = new Resend(process.env.RESEND_API_KEY);
+    await resend.emails.send({
+      from: process.env.CONTACT_FROM_EMAIL || "OrigynLX <onboarding@resend.dev>",
+      to: record.email,
+      subject: "Your OrigynLX license key",
+      text: `Thanks for your purchase.\n\nYour license key: ${record.licenseKey}\n\nEnter it at ${process.env.NEXT_PUBLIC_SITE_URL}/calculator to unlock unlimited checks and certificates.`,
+    });
+    await kv.set(keyFor(record.merchantReference), { ...record, emailSentAt: new Date().toISOString() });
+  } catch (err) {
+    console.error("Failed to send license email:", err);
+  }
 }
 
 function generateLicenseKey(): string {

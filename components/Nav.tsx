@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Logo from "./Logo";
+import { getStoredLicenseKey, hasFreeChecksLeft } from "@/lib/trial";
 
 const links = [
   { href: "/calculator", label: "Calculator" },
@@ -12,6 +13,20 @@ const links = [
 
 export default function Nav() {
   const [open, setOpen] = useState(false);
+  // Defaults match a brand-new visitor; corrected client-side after mount
+  // to avoid a server/client render mismatch on first paint.
+  const [cta, setCta] = useState<{ label: string; href: string }>({
+    label: "Start free trial",
+    href: "/calculator",
+  });
+
+  useEffect(() => {
+    if (getStoredLicenseKey()) {
+      setCta({ label: "Open calculator", href: "/calculator" });
+    } else if (!hasFreeChecksLeft()) {
+      setCta({ label: "Upgrade", href: "/pricing" });
+    }
+  }, []);
 
   return (
     <header className="fixed z-50 top-3 left-3 right-3 sm:top-4 sm:left-4 sm:right-4">
@@ -33,10 +48,10 @@ export default function Nav() {
 
           <div className="hidden lg:flex items-center gap-3">
             <Link
-              href="/calculator"
+              href={cta.href}
               className="text-sm font-semibold text-ink transition-all duration-300 px-5 py-2 rounded-full bg-seal hover:bg-seal/90"
             >
-              Start free trial
+              {cta.label}
             </Link>
           </div>
 
@@ -65,11 +80,11 @@ export default function Nav() {
               </Link>
             ))}
             <Link
-              href="/calculator"
+              href={cta.href}
               onClick={() => setOpen(false)}
               className="mt-2 text-center text-sm font-semibold text-ink px-5 py-2.5 rounded-full bg-seal"
             >
-              Start free trial
+              {cta.label}
             </Link>
           </div>
         )}

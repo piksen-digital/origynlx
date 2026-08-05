@@ -202,19 +202,24 @@ export default function CalculatorTool() {
           <p className="text-sm text-paper/70">{remaining} of 5 free checks remaining this browser.</p>
         )}
         {!licensed && (
-          <div className="flex items-center gap-2">
-            <input
-              value={licenseInput}
-              onChange={(e) => setLicenseInput(e.target.value)}
-              placeholder="Have a license key?"
-              className="rounded-lg border border-white/15 bg-white/[0.03] px-3 py-2 text-sm text-paper placeholder:text-paper/30 outline-none focus:border-seal/60"
-            />
-            <button
-              onClick={handleRedeem}
-              className="rounded-lg border border-white/20 px-3 py-2 text-sm text-paper/80 hover:border-seal/60 hover:text-paper transition-colors"
-            >
-              Unlock
-            </button>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <input
+                value={licenseInput}
+                onChange={(e) => setLicenseInput(e.target.value)}
+                placeholder="Have a license key?"
+                className="rounded-lg border border-white/15 bg-white/[0.03] px-3 py-2 text-sm text-paper placeholder:text-paper/30 outline-none focus:border-seal/60"
+              />
+              <button
+                onClick={handleRedeem}
+                className="rounded-lg border border-white/20 px-3 py-2 text-sm text-paper/80 hover:border-seal/60 hover:text-paper transition-colors"
+              >
+                Unlock
+              </button>
+            </div>
+            <a href="/pricing" className="text-[13px] font-medium text-seal hover:text-seal/80 transition-colors whitespace-nowrap">
+              Get a license →
+            </a>
           </div>
         )}
       </div>
@@ -398,13 +403,15 @@ export default function CalculatorTool() {
         </button>
 
         {blocked && (
-          <p className="text-center text-[13px] text-paper/60">
-            You've used your 5 free checks.{" "}
-            <a href="/pricing" className="text-seal underline">
-              Buy a license
-            </a>{" "}
-            for unlimited checks and certificates.
-          </p>
+          <div className="text-center space-y-3">
+            <p className="text-[13px] text-paper/60">You've used your 5 free checks.</p>
+            <a
+              href="/pricing"
+              className="inline-flex items-center justify-center rounded-full bg-seal text-ink text-sm font-semibold px-8 h-11 hover:bg-seal/90 transition-colors"
+            >
+              Unlock unlimited checks — $149/year
+            </a>
+          </div>
         )}
       </div>
 
@@ -453,6 +460,16 @@ export default function CalculatorTool() {
             </div>
           )}
 
+          {!licensed && result.qualifies && (
+            <p className="mt-6 text-[13px] leading-relaxed text-paper/60 bg-seal/[0.06] border border-seal/20 rounded-lg px-4 py-3">
+              This one qualifies — a license gets you the signed-ready certificate for it, plus unlimited
+              checks as your sourcing changes.{" "}
+              <a href="/pricing" className="text-seal font-medium hover:text-seal/80 transition-colors">
+                See pricing →
+              </a>
+            </p>
+          )}
+
           <div className="mt-6 flex flex-wrap gap-3">
             <button
               onClick={handleDownloadWorksheet}
@@ -461,13 +478,21 @@ export default function CalculatorTool() {
               Download worksheet (PDF)
             </button>
             {!showCert ? (
-              <button
-                onClick={() => setShowCert(true)}
-                disabled={!licensed}
-                className="rounded-full border border-white/20 px-6 py-2.5 text-sm text-paper/80 hover:border-seal/60 hover:text-paper transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                {licensed ? "Prepare draft certificate" : "Unlock a license to generate certificates"}
-              </button>
+              licensed ? (
+                <button
+                  onClick={() => setShowCert(true)}
+                  className="rounded-full border border-white/20 px-6 py-2.5 text-sm text-paper/80 hover:border-seal/60 hover:text-paper transition-colors"
+                >
+                  Prepare draft certificate
+                </button>
+              ) : (
+                <a
+                  href="/pricing"
+                  className="rounded-full bg-seal text-ink px-6 py-2.5 text-sm font-semibold hover:bg-seal/90 transition-colors"
+                >
+                  Unlock the certificate →
+                </a>
+              )
             ) : null}
           </div>
 

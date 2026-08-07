@@ -5,28 +5,44 @@ import Link from "next/link";
 import Logo from "./Logo";
 import { getStoredLicenseKey, hasFreeChecksLeft } from "@/lib/trial";
 
-const links = [
-  { href: "/calculator", label: "Calculator" },
-  { href: "/pricing", label: "Pricing" },
-  { href: "/contact", label: "Contact" },
-];
+const COPY = {
+  en: {
+    links: [
+      { href: "/calculator", label: "Calculator" },
+      { href: "/pricing", label: "Pricing" },
+      { href: "/contact", label: "Contact" },
+    ],
+    ctaDefault: { label: "Start free trial", href: "/calculator" },
+    ctaOpen: { label: "Open calculator", href: "/calculator" },
+    ctaUpgrade: { label: "Upgrade", href: "/pricing" },
+    langSwitch: { label: "ES", href: "/es" },
+  },
+  es: {
+    links: [
+      { href: "/calculator", label: "Calculadora" },
+      { href: "/pricing", label: "Precios" },
+      { href: "/contact", label: "Contacto" },
+    ],
+    ctaDefault: { label: "Prueba gratis", href: "/calculator" },
+    ctaOpen: { label: "Abrir calculadora", href: "/calculator" },
+    ctaUpgrade: { label: "Mejorar plan", href: "/pricing" },
+    langSwitch: { label: "EN", href: "/" },
+  },
+};
 
-export default function Nav() {
+export default function Nav({ locale = "en" }: { locale?: "en" | "es" }) {
   const [open, setOpen] = useState(false);
-  // Defaults match a brand-new visitor; corrected client-side after mount
-  // to avoid a server/client render mismatch on first paint.
-  const [cta, setCta] = useState<{ label: string; href: string }>({
-    label: "Start free trial",
-    href: "/calculator",
-  });
+  const t = COPY[locale];
+  const [cta, setCta] = useState(t.ctaDefault);
 
   useEffect(() => {
     if (getStoredLicenseKey()) {
-      setCta({ label: "Open calculator", href: "/calculator" });
+      setCta(t.ctaOpen);
     } else if (!hasFreeChecksLeft()) {
-      setCta({ label: "Upgrade", href: "/pricing" });
+      setCta(t.ctaUpgrade);
     }
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locale]);
 
   return (
     <header className="fixed z-50 top-3 left-3 right-3 sm:top-4 sm:left-4 sm:right-4">
@@ -35,7 +51,7 @@ export default function Nav() {
           <Logo />
 
           <div className="hidden lg:flex items-center gap-1">
-            {links.map((l) => (
+            {t.links.map((l) => (
               <Link
                 key={l.href}
                 href={l.href}
@@ -47,6 +63,12 @@ export default function Nav() {
           </div>
 
           <div className="hidden lg:flex items-center gap-3">
+            <Link
+              href={t.langSwitch.href}
+              className="text-sm font-medium text-paper/50 hover:text-paper transition-colors"
+            >
+              {t.langSwitch.label}
+            </Link>
             <Link
               href={cta.href}
               className="text-sm font-semibold text-ink transition-all duration-300 px-5 py-2 rounded-full bg-seal hover:bg-seal/90"
@@ -69,7 +91,7 @@ export default function Nav() {
 
         {open && (
           <div className="lg:hidden flex flex-col gap-1 px-5 pb-5 pt-1">
-            {links.map((l) => (
+            {t.links.map((l) => (
               <Link
                 key={l.href}
                 href={l.href}
@@ -79,6 +101,13 @@ export default function Nav() {
                 {l.label}
               </Link>
             ))}
+            <Link
+              href={t.langSwitch.href}
+              onClick={() => setOpen(false)}
+              className="rounded-lg px-3 py-2.5 text-sm font-medium text-paper/60 hover:text-paper transition-colors"
+            >
+              {t.langSwitch.label === "ES" ? "Español" : "English"}
+            </Link>
             <Link
               href={cta.href}
               onClick={() => setOpen(false)}

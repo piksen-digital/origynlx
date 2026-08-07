@@ -13,6 +13,7 @@ const kv = new Redis({
  */
 
 export type LicenseStatus = "pending" | "active" | "failed";
+const LICENSE_TERM_DAYS = 365;
 
 export interface LicenseRecord {
   merchantReference: string;
@@ -26,9 +27,12 @@ export interface LicenseRecord {
   emailSentAt?: string;
   createdAt: string;
   activatedAt?: string;
+  expiresAt?: string;
+  renewalReminderSentAt?: string;
 }
 
 const keyFor = (merchantReference: string) => `license:${merchantReference}`;
+const refIndexKey = (pesepayReferenceNumber: string) => `pesepayref:${pesepayReferenceNumber}`;
 
 export async function createPendingLicense(record: {
   merchantReference: string;
@@ -50,8 +54,10 @@ export async function createPendingLicense(record: {
 /**
  * Called right after Pesepay's initiate call returns, before the customer
  * even reaches the checkout page. Stores the reference/poll URL so verify
- * can later ask Pesepay directly "did this succeed?" instead of only
- * waiting on the resultUrl webhook.
+ * can later ask Pesepay directly "did this succeed?", and indexes by
+ * Pesepay's own referenceNumber too - their webhook payload may not
+ * reliably echo back our merchantReference, so this gives the webhook a
+ * second way to find the right record.
  */
 export async function attachPesepayTracking(
   merchantReference: string,
@@ -59,12 +65,16 @@ export async function attachPesepayTracking(
   pollUrl?: string
 ): Promise<void> {
   const existing = await kv.get<LicenseRecord>(keyFor(merchantReference));
-  if (!existing) return;
+  if (!existing) {
+    console.error(`attachPesepayTracking: no pending record found for ${merchantReference}`);
+    return;
+  }
   await kv.set(keyFor(merchantReference), {
     ...existing,
     pesepayReferenceNumber,
     pesepayPollUrl: pollUrl,
   });
+  await kv.set(refIndexKey(pesepayReferenceNumber), merchantReference);
 }
 
 /**
@@ -83,6 +93,9 @@ export async function activateLicense(
   }
 
   const licenseKey = generateLicenseKey();
+  const now = new Date();
+  const expires = new Date(now);
+  expires.setDate(expires.getDate() + LICENSE_TERM_DAYS);
 
   const value: LicenseRecord = {
     merchantReference,
@@ -93,12 +106,14 @@ export async function activateLicense(
     pesepayReferenceNumber,
     pesepayPollUrl: existing.pesepayPollUrl,
     licenseKey,
-    createdAt: existing.createdAt ?? new Date().toISOString(),
-    activatedAt: new Date().toISOString(),
+    createdAt: existing.createdAt ?? now.toISOString(),
+    activatedAt: now.toISOString(),
+    expiresAt: expires.toISOString(),
   };
 
   await kv.set(keyFor(merchantReference), value);
   await kv.set(`licensekey:${licenseKey}`, merchantReference);
+  await kv.set(refIndexKey(pesepayReferenceNumber), merchantReference);
 
   return { record: value, justActivated: true };
 }
@@ -125,10 +140,40 @@ export async function getLicenseByReference(
   return record || null;
 }
 
+/**
+ * Fallback lookup for the webhook when the payload has Pesepay's own
+ * referenceNumber but not our merchantReference.
+ */
+export async function getLicenseByPesepayReference(
+  pesepayReferenceNumber: string
+): Promise<LicenseRecord | null> {
+  const merchantReference = await kv.get<string>(refIndexKey(pesepayReferenceNumber));
+  if (!merchantReference) return null;
+  return getLicenseByReference(merchantReference);
+}
+
 export async function getLicenseByKey(licenseKey: string): Promise<LicenseRecord | null> {
   const merchantReference = await kv.get<string>(`licensekey:${licenseKey}`);
   if (!merchantReference) return null;
   return getLicenseByReference(merchantReference);
+}
+
+/**
+ * Every active license key, for the renewal-reminder cron. Fine at this
+ * scale (KEYS/SCAN over a few hundred-thousand keys is cheap); revisit if
+ * this ever needs to run over millions of records.
+ */
+export async function listActiveLicenses(): Promise<LicenseRecord[]> {
+  const keys = await kv.keys("license:*");
+  if (keys.length === 0) return [];
+  const records = await Promise.all(keys.map((k) => kv.get<LicenseRecord>(k)));
+  return records.filter((r): r is LicenseRecord => !!r && r.status === "active");
+}
+
+export async function markRenewalReminderSent(merchantReference: string): Promise<void> {
+  const existing = await kv.get<LicenseRecord>(keyFor(merchantReference));
+  if (!existing) return;
+  await kv.set(keyFor(merchantReference), { ...existing, renewalReminderSentAt: new Date().toISOString() });
 }
 
 /**

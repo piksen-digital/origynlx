@@ -4,21 +4,40 @@ import crypto from "crypto";
  * Server-only helpers for talking to Pesepay.
  * Never import this file from a "use client" component - the encryption key
  * must never reach the browser.
+ *
+ * Endpoint URLs below are confirmed from Pesepay's own API reference pages
+ * (developers.pesepay.com/api-reference/*), not guessed. Env vars still
+ * override them if Pesepay ever changes these.
  */
+
+const CONFIRMED_URLS = {
+  sandbox: {
+    initiate: "https://api.test.sandbox.pesepay.com/payments-engine/v1/payments/initiate",
+    checkStatus: "https://api.test.sandbox.pesepay.com/payments-engine/v1/payments/check-payment",
+  },
+  production: {
+    initiate: "https://api.pesepay.com/api/payments-engine/v1/payments/initiate",
+    checkStatus: "https://api.pesepay.com/api/payments-engine/v1/payments/check-payment",
+  },
+};
 
 function getConfig() {
   const integrationKey = process.env.PESEPAY_INTEGRATION_KEY;
   const encryptionKey = process.env.PESEPAY_ENCRYPTION_KEY;
   const env = process.env.PESEPAY_ENV === "production" ? "production" : "sandbox";
-  const initiateUrl =
-    env === "production"
-      ? process.env.PESEPAY_INITIATE_URL_PRODUCTION
-      : process.env.PESEPAY_INITIATE_URL_SANDBOX;
 
-  if (!integrationKey || !encryptionKey || !initiateUrl) {
-    throw new Error(
-      "Pesepay is not configured. Set PESEPAY_INTEGRATION_KEY, PESEPAY_ENCRYPTION_KEY, and the initiate URL for the current PESEPAY_ENV."
-    );
+  const initiateUrl =
+    (env === "production"
+      ? process.env.PESEPAY_INITIATE_URL_PRODUCTION
+      : process.env.PESEPAY_INITIATE_URL_SANDBOX) || CONFIRMED_URLS[env].initiate;
+
+  const checkStatusUrl =
+    (env === "production"
+      ? process.env.PESEPAY_CHECK_STATUS_URL_PRODUCTION
+      : process.env.PESEPAY_CHECK_STATUS_URL_SANDBOX) || CONFIRMED_URLS[env].checkStatus;
+
+  if (!integrationKey || !encryptionKey) {
+    throw new Error("Pesepay is not configured. Set PESEPAY_INTEGRATION_KEY and PESEPAY_ENCRYPTION_KEY.");
   }
 
   // AES-256-CBC needs a 32-byte key. Pesepay issues 32-character encryption
@@ -29,7 +48,7 @@ function getConfig() {
     );
   }
 
-  return { integrationKey, encryptionKey, initiateUrl, env };
+  return { integrationKey, encryptionKey, initiateUrl, checkStatusUrl, env };
 }
 
 function encryptPayload(payload: object, encryptionKey: string): string {
@@ -65,6 +84,7 @@ export interface InitiateTransactionResult {
   referenceNumber: string;
   redirectUrl: string;
   pollUrl?: string;
+  raw: any;
 }
 
 /**
@@ -114,10 +134,17 @@ export async function initiatePesepayTransaction(
     throw new Error("Decrypted Pesepay response is missing redirectUrl or referenceNumber.");
   }
 
+  if (!decrypted?.pollUrl) {
+    console.warn(
+      "Pesepay initiate response had no pollUrl - falling back to the confirmed check-status URL for this environment. This is fine, just noting it."
+    );
+  }
+
   return {
     referenceNumber: decrypted.referenceNumber,
     redirectUrl: decrypted.redirectUrl,
     pollUrl: decrypted.pollUrl,
+    raw: decrypted,
   };
 }
 
@@ -137,32 +164,20 @@ export interface PesepayStatusResult {
 
 /**
  * Actively asks Pesepay for a transaction's current status, rather than
- * waiting for the resultUrl webhook to arrive. This is the more reliable
- * of the two confirmation paths - webhooks can be delayed, misconfigured,
- * or never fire at all, but a direct status check has nowhere to hide.
+ * only waiting for the resultUrl webhook to arrive. Confirmed against
+ * Pesepay's Check Payment Status doc: GET request, referenceNumber as a
+ * query param, response is { payload: "<encrypted>" }.
  *
- * Uses the pollUrl returned at initiate time if we have it (preferred).
- * Falls back to PESEPAY_CHECK_STATUS_URL_* + referenceNumber if not.
- * VERIFY the exact endpoint and field names against your Pesepay
- * dashboard/docs - same caveat as the webhook payload shape.
+ * Prefers the pollUrl returned at initiate time; falls back to the
+ * confirmed check-status URL for the current environment if that's
+ * missing, so this always has somewhere valid to call.
  */
 export async function checkPesepayTransactionStatus(
   referenceNumber: string,
   pollUrl?: string
 ): Promise<PesepayStatusResult> {
-  const { integrationKey, encryptionKey, env } = getConfig();
-
-  const url =
-    pollUrl ||
-    (env === "production"
-      ? process.env.PESEPAY_CHECK_STATUS_URL_PRODUCTION
-      : process.env.PESEPAY_CHECK_STATUS_URL_SANDBOX);
-
-  if (!url) {
-    throw new Error(
-      "No pollUrl available and no PESEPAY_CHECK_STATUS_URL configured for this environment."
-    );
-  }
+  const { integrationKey, encryptionKey, checkStatusUrl } = getConfig();
+  const url = pollUrl || checkStatusUrl;
 
   const separator = url.includes("?") ? "&" : "?";
   const response = await fetch(`${url}${separator}referenceNumber=${encodeURIComponent(referenceNumber)}`, {
@@ -172,12 +187,12 @@ export async function checkPesepayTransactionStatus(
 
   if (!response.ok) {
     const text = await response.text().catch(() => "");
-    throw new Error(`Pesepay status check failed (${response.status}): ${text}`);
+    throw new Error(`Pesepay status check failed (${response.status}) at ${url}: ${text}`);
   }
 
   const body = await response.json();
   if (!body?.payload) {
-    throw new Error("Pesepay status response did not include an encrypted payload.");
+    throw new Error(`Pesepay status response at ${url} did not include an encrypted payload.`);
   }
 
   const decrypted = decryptPayload(body.payload, encryptionKey);

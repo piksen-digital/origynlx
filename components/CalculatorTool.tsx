@@ -21,6 +21,7 @@ import { generateCertificatePDF, type CertifierInfo } from "@/lib/certificate-pd
 import { generateAuditWorksheetPDF } from "@/lib/audit-worksheet-pdf";
 import { parseBOMCsv, downloadBomTemplate } from "@/lib/csv-import";
 import { listSavedBOMs, saveBOM, deleteSavedBOM, type SavedBOM } from "@/lib/saved-boms";
+import { THRESHOLD_REFERENCES } from "@/lib/usmca-thresholds";
 
 let idCounter = 0;
 const newId = () => `li_${++idCounter}_${Date.now()}`;
@@ -30,6 +31,7 @@ export default function CalculatorTool() {
   const [transactionValue, setTransactionValue] = useState<number>(0);
   const [method, setMethod] = useState<"transaction-value" | "net-cost">("transaction-value");
   const [threshold, setThreshold] = useState<number>(DEFAULT_THRESHOLDS["transaction-value"]);
+  const [categoryId, setCategoryId] = useState<string>("general");
   const [lineItems, setLineItems] = useState<BOMLineItem[]>([emptyLineItem(newId()), emptyLineItem(newId())]);
   const [result, setResult] = useState<RVCResult | null>(null);
   const [deMinimis, setDeMinimis] = useState<DeMinimisResult | null>(null);
@@ -97,6 +99,16 @@ export default function CalculatorTool() {
   function handleMethodChange(next: "transaction-value" | "net-cost") {
     setMethod(next);
     setThreshold(DEFAULT_THRESHOLDS[next]);
+    setCategoryId("");
+  }
+
+  function handleCategoryChange(id: string) {
+    setCategoryId(id);
+    const ref = THRESHOLD_REFERENCES.find((r) => r.id === id);
+    if (ref) {
+      setMethod(ref.method);
+      setThreshold(ref.thresholdPercent);
+    }
   }
 
   function handleCalculate() {
@@ -273,6 +285,48 @@ export default function CalculatorTool() {
 
       {/* Product + transaction inputs */}
       <div className="rounded-card border border-white/12 bg-white/[0.03] p-6 sm:p-8 space-y-6">
+        <div>
+          <label className="text-[13px] font-medium text-paper/60">Product category (sets method + threshold)</label>
+          <select
+            value={categoryId}
+            onChange={(e) => handleCategoryChange(e.target.value)}
+            className="mt-2 w-full rounded-lg border border-white/15 bg-white/[0.02] px-4 py-2.5 text-paper outline-none focus:border-seal/60"
+          >
+            {categoryId === "" && <option value="">Custom (manually set)</option>}
+            {THRESHOLD_REFERENCES.map((r) => (
+              <option key={r.id} value={r.id}>
+                {r.label} — {r.thresholdPercent}% ({r.method === "net-cost" ? "net cost" : "transaction value"})
+              </option>
+            ))}
+          </select>
+
+          {(() => {
+            const ref = THRESHOLD_REFERENCES.find((r) => r.id === categoryId);
+            if (!ref) return null;
+            return (
+              <div className="mt-3 rounded-lg border border-white/10 bg-white/[0.02] p-4 space-y-2">
+                <div className="flex items-center gap-2">
+                  <span className={`text-[11px] font-semibold uppercase tracking-wide rounded-full px-2 py-0.5 ${ref.verified ? "bg-pass/15 text-pass" : "bg-fail/15 text-fail"}`}>
+                    {ref.verified ? "Sourced" : "Unverified placeholder"}
+                  </span>
+                </div>
+                {ref.notes && <p className="text-[13px] leading-relaxed text-paper/60">{ref.notes}</p>}
+                {ref.sources.length > 0 && (
+                  <ul className="space-y-1">
+                    {ref.sources.map((s) => (
+                      <li key={s.url}>
+                        <a href={s.url} target="_blank" rel="noopener noreferrer" className="text-[12px] text-seal hover:text-seal/80 underline transition-colors">
+                          {s.title}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            );
+          })()}
+        </div>
+
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
             <label className="text-[13px] font-medium text-paper/60">Product name</label>
@@ -312,7 +366,10 @@ export default function CalculatorTool() {
               min={0}
               max={100}
               value={threshold}
-              onChange={(e) => setThreshold(Number(e.target.value))}
+              onChange={(e) => {
+                setThreshold(Number(e.target.value));
+                setCategoryId("");
+              }}
               className="mt-2 w-full rounded-lg border border-white/15 bg-white/[0.02] px-4 py-2.5 text-paper outline-none focus:border-seal/60"
             />
           </div>

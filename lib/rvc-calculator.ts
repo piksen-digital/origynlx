@@ -19,6 +19,9 @@ export interface BOMLineItem {
   countryOfOrigin: string;
   value: number;
   originating: boolean;
+  /** Optional USMCA-specific metadata. Existing saved BOMs remain compatible. */
+  tariffItem?: string;
+  originStatus?: "originating" | "non-originating" | "undetermined";
 }
 
 export interface RVCInput {
@@ -104,6 +107,8 @@ export function emptyLineItem(id: string): BOMLineItem {
     countryOfOrigin: "US",
     value: 0,
     originating: true,
+    tariffItem: "",
+    originStatus: "originating",
   };
 }
 

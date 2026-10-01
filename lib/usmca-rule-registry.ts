@@ -13,9 +13,9 @@
  */
 import type { UsmcaRule, UsmcaSectorFile } from "./usmca-rule-types";
 import { AUTOMOTIVE_SECTOR_FILE } from "./usmca-thresholds/automotive";
-import { CHEMICALS_PLASTICS_SECTOR_FILE } from "./usmca-thresholds/chemicals-plastics";
-import { ELECTRONICS_MACHINERY_SECTOR_FILE } from "./usmca-thresholds/electronics-machinery";
-import { TEXTILE_SECTOR_FILE } from "./usmca-thresholds/textiles";
+import { CHEMICALS_PLASTICS_SECTOR_FILE } from "./usmca-thresholds/usmca-chemicals-ts-chapters-28-38-pass-rev-3-gn-11-2026-rev-15.ts";
+import { ELECTRONICS_MACHINERY_SECTOR_FILE } from "./usmca-thresholds/usmca-machinery-electrical-ts-chapters-84-85-pass-rev-3-gn-11-2026-rev-15-rebuilt-on-the-automotive-optics-record-template.ts";
+import { TEXTILE_SECTOR_FILE } from "./usmca-thresholds/usmca-textiles-apparel-ts-chapters-50-63-pass-rev-1-gn-11-2026-rev-15-fresh-authoritative-build.ts";
 
 export const ALL_SECTOR_FILES: UsmcaSectorFile[] = [
   AUTOMOTIVE_SECTOR_FILE,

@@ -958,7 +958,7 @@ export const CHEMICALS_RULES: UsmcaRule[] = [
   },
 ];
 
-export const CHEMICALS_SECTOR_FILE: UsmcaSectorFile = {
+export const CHEMICALS_PLASTICS_SECTOR_FILE: UsmcaSectorFile = {
   sector: "chemicals",
   chaptersCovered: CHEM_CHAPTERS,
   dataAsOf: "2026-09-28",

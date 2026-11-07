@@ -109,6 +109,9 @@ export default function CalculatorTool() {
   // P2: origin-engineering output (free feature)
   const [engineering, setEngineering] = useState<OriginEngineeringResult | null>(null);
 
+  // P6: record vault
+  const [vaultMessage, setVaultMessage] = useState<string | null>(null);
+
   const [licensed, setLicensed] = useState(false);
   const [checkingLicense, setCheckingLicense] = useState(true);
   const [licenseInput, setLicenseInput] = useState("");
@@ -257,6 +260,39 @@ export default function CalculatorTool() {
       engineering,
     });
     downloadPdf(bytes, (slug(productName || "origynlx-broker-package")) + "-broker-package.pdf");
+  }
+
+  async function handleSaveToVault() {
+    if (!result) return;
+    const key = getStoredLicenseKey();
+    if (!key || !licensed) return;
+    setVaultMessage(null);
+    const res = await fetch("/api/vault/save", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        licenseKey: key,
+        record: {
+          productName: productName || "Untitled product",
+          hsSubheading,
+          tariffItem,
+          productionCountry,
+          importingParty,
+          method,
+          threshold,
+          transactionValue,
+          netCost: method === "net-cost" ? Number(netCost) || undefined : undefined,
+          lineItems,
+          certInfo,
+        },
+      }),
+    });
+    const data = await res.json();
+    if (res.ok && data.id) {
+      setVaultMessage("Saved to your record vault - see the Vault page in the menu.");
+    } else {
+      setVaultMessage(data.error || "Could not save to the vault.");
+    }
   }
 
   function handleCsvFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -838,6 +874,14 @@ export default function CalculatorTool() {
                 Download broker review package (PDF)
               </button>
             )}
+            {licensed && (
+              <button
+                onClick={handleSaveToVault}
+                className="rounded-full border border-white/20 px-6 py-2.5 text-sm text-paper/80 hover:border-seal/60 hover:text-paper transition-colors"
+              >
+                Save to record vault
+              </button>
+            )}
             {!showCert ? (
               licensed ? (
                 <button
@@ -856,6 +900,10 @@ export default function CalculatorTool() {
               )
             ) : null}
           </div>
+
+          {vaultMessage && (
+            <p className="mt-3 text-[13px] text-seal">{vaultMessage}</p>
+          )}
 
           <div className="mt-4 rounded-lg border border-white/10 bg-white/[0.02] p-4 text-[13px] leading-relaxed text-paper/55">
             <span className="font-medium text-paper/75">Want a licensed customs broker to review this qualification?</span>{" "}

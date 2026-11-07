@@ -29,7 +29,7 @@ import { PRECIOUS_SECTOR_FILE } from "./usmca-thresholds/usmca-precious-metals-t
 import { PREPARED_FOODSTUFFS_SECTOR_FILE } from "./usmca-thresholds/usmca-prepared-foodstuffs-ts-chapters-16-24-pass-rev-1-gn-11-2026-rev-15.ts";
 import { PULP_PAPER_SECTOR_FILE } from "./usmca-thresholds/usmca-pulp-paper-printed-matter-ts-chapters-47-49-pass-rev-1-gn-11-2026-rev-15.ts";
 import { HIDES_LEATHER_FURS_SECTOR_FILE } from "./usmca-thresholds/usmca-raw-hides-leather-furs-ts-chapters-41-43-pass-rev-1-gn-11-2026-rev-15.ts";
-import { STONE_CERAMICS_SECTOR_FILE } from "./usmca-thresholds/usmca-stone-ceramics-glass-ts-chapters-68-70-pass-rev-1-gn-11-2026-rev-15.ts";
+import { STONE_CERAMICS_GLASS_SECTOR_FILE } from "./usmca-thresholds/usmca-stone-ceramics-glass-ts-chapters-68-70-pass-rev-1-gn-11-2026-rev-15.ts";
 import { TRANSPORT_SECTOR_FILE } from "./usmca-thresholds/usmca-transport-ts-chapters-86-89-pass-rev-3-gn-11-2026-rev-15-rebuilt-on-the-automotive-optics-record-template.ts";
 import { VEGETABLE_PRODUCTS_SECTOR_FILE } from "./usmca-thresholds/usmca-vegetable-products-ts-chapters-6-14-pass-rev-1-gn-11-2026-rev-15.ts";
 import { WOOD_SECTOR_FILE } from "./usmca-thresholds/usmca-wood-and-article-thereof-ts-chapters-44-46-pass-rev-1-gn-11-2026-rev-15.ts";
@@ -51,7 +51,7 @@ export const ALL_SECTOR_FILES: UsmcaSectorFile[] = [
   PREPARED_FOODSTUFFS_SECTOR_FILE,
   PULP_PAPER_SECTOR_FILE,
   HIDES_LEATHER_FURS_SECTOR_FILE,
-  STONE_CERAMICS_SECTOR_FILE,
+  STONE_CERAMICS_GLASS_SECTOR_FILE,
   TRANSPORT_SECTOR_FILE,
   VEGETABLE_PRODUCTS_SECTOR_FILE,
   WOOD_SECTOR_FILE,

@@ -7,6 +7,7 @@ import {
   type RVCResult,
 } from "./rvc-calculator";
 import { THRESHOLD_PICKER_OPTIONS, type ThresholdPickerReference } from "./usmca-rule-picker";
+import { flagTradeRemedies } from "./trade-remedy-flags";
 
 /**
  * Batch CSV qualification (P3).
@@ -48,6 +49,7 @@ export interface BatchRowResult {
   qualifies: boolean;
   status: "qualifies" | "fails" | "needs-review";
   reviewReason: string | null;
+  remedyFlags: string[];
   lineItems: BOMLineItem[];
   result: RVCResult;
   deMinimis: DeMinimisResult;
@@ -229,6 +231,8 @@ function runOne(p: BatchProductInput): BatchRowResult {
       "Fails the RVC threshold but total non-originating content is within the 10% de minimis reference limit - may still qualify if the only issue is a tariff shift. Needs review.";
   }
 
+  const remedyFlags = flagTradeRemedies({ hsCode: p.hsSubheading }).map((f) => f.short);
+
   const status: BatchRowResult["status"] =
     reviewReason !== null ? "needs-review" : result.qualifies ? "qualifies" : "fails";
 
@@ -245,6 +249,7 @@ function runOne(p: BatchProductInput): BatchRowResult {
     qualifies: result.qualifies,
     status,
     reviewReason,
+    remedyFlags,
     lineItems: p.lineItems,
     result,
     deMinimis,
@@ -288,6 +293,7 @@ export function resultsCsv(rows: BatchRowResult[]): string {
     "margin_percent",
     "status",
     "review_reason",
+    "trade_remedy_flags",
   ];
   const lines: string[] = [header.join(",")];
   for (const r of rows) {
@@ -303,6 +309,7 @@ export function resultsCsv(rows: BatchRowResult[]): string {
       String(r.marginPercent),
       r.status,
       csvField(r.reviewReason || ""),
+      csvField(r.remedyFlags.join("; ")),
     ].join(","));
   }
   return lines.join("\n");

@@ -23,6 +23,7 @@ import { parseBOMCsv, downloadBomTemplate } from "@/lib/csv-import";
 import { calculateDutySavings, type DutySavingsResult } from "@/lib/duty-savings";
 import { analyzeOriginEngineering, type OriginEngineeringResult } from "@/lib/origin-engineering";
 import { generateBrokerPackagePDF } from "@/lib/broker-package-pdf";
+import { flagTradeRemedies, flagLineItems } from "@/lib/trade-remedy-flags";
 import { listSavedBOMs, saveBOM, deleteSavedBOM, type SavedBOM } from "@/lib/saved-boms";
 import {
   THRESHOLD_PICKER_OPTIONS,
@@ -320,6 +321,17 @@ export default function CalculatorTool() {
       qualifies: result.qualifies,
     });
   }, [result, annualImportValue, mfnRateInput, surchargeRateInput, entriesPerYearInput, importingParty, productionCountry]);
+
+  // P7: trade remedies that survive USMCA (232/301/AD-CVD), free feature
+  const remedyFlags = useMemo(() => {
+    if (!result) return [];
+    return flagTradeRemedies({ hsCode: hsSubheading, countryOfOrigin: productionCountry });
+  }, [result, hsSubheading, productionCountry]);
+
+  const componentRemedyFlags = useMemo(() => {
+    if (!result) return [];
+    return flagLineItems(lineItems);
+  }, [result, lineItems]);
 
   return (
     <div className="space-y-8">
@@ -692,6 +704,11 @@ export default function CalculatorTool() {
             {savings && savings.warnings.map((w, i) => (
               <p key={i} className="mt-3 border-l-2 border-fail/40 pl-3 text-[12px] leading-relaxed text-paper/60">{w}</p>
             ))}
+            {savings && remedyFlags.some((f) => f.kind === "232-steel" || f.kind === "232-aluminum") && (
+              <p className="mt-3 border-l-2 border-fail/60 pl-3 text-[12px] font-medium leading-relaxed text-fail/90">
+                Section 232 steel/aluminum duties (50%) apply even to USMCA-qualifying goods classified in these chapters - the estimate above assumes full duty-free treatment and overstates your savings for steel and aluminum products.
+              </p>
+            )}
             {savings && (
               <details className="mt-3 text-[12px] text-paper/50">
                 <summary className="cursor-pointer text-paper/60">How these numbers work</summary>
@@ -701,6 +718,41 @@ export default function CalculatorTool() {
                   ))}
                 </ul>
               </details>
+            )}
+          </div>
+
+          {/* P7: trade remedies that survive USMCA */}
+          <div className="mt-6 rounded-lg border border-white/10 bg-white/[0.02] p-5">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-[13px] font-medium uppercase tracking-[0.08em] text-paper/50">Trade remedies check</span>
+              {remedyFlags.length === 0 && componentRemedyFlags.length === 0 && (
+                <span className="text-[12px] font-medium text-pass">No 232/301 flags detected</span>
+              )}
+            </div>
+            <p className="mt-2 text-[12px] leading-relaxed text-paper/55">
+              USMCA only waives the MFN duty. Section 232 and 301 measures and AD/CVD orders are separate regimes - qualifying under USMCA does not exempt you from them.
+            </p>
+            {remedyFlags.map((f, i) => (
+              <div
+                key={i}
+                className={"mt-3 rounded-lg border px-3 py-2 " + (f.severity === "critical" ? "border-fail/40 bg-fail/[0.05]" : f.severity === "warning" ? "border-seal/40 bg-seal/[0.05]" : "border-white/10 bg-white/[0.02]")}
+              >
+                <p className={"text-[13px] font-semibold " + (f.severity === "critical" ? "text-fail" : f.severity === "warning" ? "text-seal" : "text-paper/75")}>{f.label}</p>
+                <p className="mt-1 text-[12px] leading-relaxed text-paper/60">{f.text}</p>
+              </div>
+            ))}
+            {componentRemedyFlags.length > 0 && (
+              <div className="mt-3 text-[12px] leading-relaxed text-paper/50">
+                <p className="font-medium text-paper/60">Flagged inputs (informational):</p>
+                {componentRemedyFlags.map((c) => (
+                  <p key={c.id} className="mt-1">{c.description + " - " + c.flag.short + ". Section 232 applies on the classification of the finished good at import, not on components directly."}</p>
+                ))}
+              </div>
+            )}
+            {remedyFlags.length === 0 && componentRemedyFlags.length === 0 && (
+              <p className="mt-3 text-[12px] leading-relaxed text-paper/45">
+                No steel or aluminum chapter detected and no China-origin flag on the finished good. This does not clear Section 232 derivative-article lists or country-specific AD/CVD orders - confirm your 10-digit HTS with your broker.
+              </p>
             )}
           </div>
 

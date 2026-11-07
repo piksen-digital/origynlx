@@ -197,6 +197,9 @@ export default function BatchQualifier() {
                         {r.status === "qualifies" ? "Qualifies" : r.status === "fails" ? "Fails" : "Needs review"}
                       </span>
                       {r.reviewReason && <p className="mt-1 max-w-md text-[12px] leading-relaxed text-paper/40">{r.reviewReason}</p>}
+                    {r.remedyFlags.length > 0 && (
+                      <p className="mt-1 max-w-md text-[12px] font-medium text-fail/80">{r.remedyFlags.join(" | ")}</p>
+                    )}
                     </td>
                   </tr>
                 ))}

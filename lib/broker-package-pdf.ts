@@ -15,6 +15,7 @@ import {
   wrappedBody,
   drawFooters,
 } from "./pdf-branding";
+import { flagTradeRemedies, flagLineItems } from "./trade-remedy-flags";
 
 export interface BrokerPackageInput {
   productName: string;
@@ -103,6 +104,32 @@ export async function generateBrokerPackagePDF(input: BrokerPackageInput): Promi
     ctx.y -= 4;
   }
 
+  const remedies = flagTradeRemedies({ hsCode: input.hsSubheading, countryOfOrigin: input.productionCountry });
+  heading(ctx, "Trade remedies check (survive USMCA)");
+  if (remedies.length === 0) {
+    keyLine(ctx, "Section 232/301 flags", "None detected for this HS subheading");
+    wrappedBody(
+      ctx,
+      "Section 232 derivative-article lists and country-specific AD/CVD orders are outside this check - confirm the 10-digit HTS against them.",
+      105,
+      { size: 8.5, color: BRAND.gray }
+    );
+  } else {
+    for (const f of remedies) {
+      wrappedBody(ctx, f.label + ": " + f.text, 105, { size: 8.5, color: BRAND.ink });
+    }
+  }
+  const flaggedInputs = flagLineItems(input.lineItems);
+  if (flaggedInputs.length > 0) {
+    wrappedBody(
+      ctx,
+      "Flagged inputs (informational): " + flaggedInputs.map((c) => c.description).join(", ") + ". Section 232 applies on the classification of the finished good at import, not on components directly.",
+      105,
+      { size: 8.5, color: BRAND.gray }
+    );
+  }
+  ctx.y -= 4;
+
   heading(ctx, "Bill of materials");
   ensureSpace(ctx, 34, "OrigynLX");
   const colDesc = MARGIN;
@@ -149,6 +176,7 @@ export async function generateBrokerPackagePDF(input: BrokerPackageInput): Promi
     "All nine certification data elements complete",
     "Signature and date present on the executed certification",
     "Records retained for five years from the date of the certification",
+    "Section 232/301 and AD/CVD applicability confirmed for the 10-digit HTS",
   ];
   for (const item of checklist) {
     ensureSpace(ctx, 18, "OrigynLX");

@@ -20,6 +20,9 @@ import {
 import { generateCertificatePDF, type CertifierInfo } from "@/lib/certificate-pdf";
 import { generateAuditWorksheetPDF } from "@/lib/audit-worksheet-pdf";
 import { parseBOMCsv, downloadBomTemplate } from "@/lib/csv-import";
+import { calculateDutySavings, type DutySavingsResult } from "@/lib/duty-savings";
+import { analyzeOriginEngineering, type OriginEngineeringResult } from "@/lib/origin-engineering";
+import { generateBrokerPackagePDF } from "@/lib/broker-package-pdf";
 import { listSavedBOMs, saveBOM, deleteSavedBOM, type SavedBOM } from "@/lib/saved-boms";
 import {
   THRESHOLD_PICKER_OPTIONS,
@@ -96,6 +99,14 @@ export default function CalculatorTool() {
   const [lineItems, setLineItems] = useState<BOMLineItem[]>([emptyLineItem(newId()), emptyLineItem(newId())]);
   const [result, setResult] = useState<RVCResult | null>(null);
   const [deMinimis, setDeMinimis] = useState<DeMinimisResult | null>(null);
+
+  // P1: dollar-savings inputs (free feature)
+  const [annualImportValue, setAnnualImportValue] = useState<string>("");
+  const [mfnRateInput, setMfnRateInput] = useState<string>("");
+  const [surchargeRateInput, setSurchargeRateInput] = useState<string>("0");
+  const [entriesPerYearInput, setEntriesPerYearInput] = useState<string>("12");
+  // P2: origin-engineering output (free feature)
+  const [engineering, setEngineering] = useState<OriginEngineeringResult | null>(null);
 
   const [licensed, setLicensed] = useState(false);
   const [checkingLicense, setCheckingLicense] = useState(true);
@@ -183,16 +194,18 @@ export default function CalculatorTool() {
 
   function handleCalculate() {
     if (!licensed && !hasFreeChecksLeft()) return;
-    const r = calculateRVC({
+    const input = {
       productName,
       transactionValue,
       netCost: method === "net-cost" ? Number(netCost) || undefined : undefined,
       method,
       thresholdPercent: threshold,
       lineItems,
-    });
+    };
+    const r = calculateRVC(input);
     setResult(r);
     setDeMinimis(checkDeMinimis({ transactionValue, lineItems }));
+    setEngineering(analyzeOriginEngineering(input, r));
     if (!licensed) {
       recordCheckUsed();
       setRemaining(checksRemaining());
@@ -225,6 +238,24 @@ export default function CalculatorTool() {
     if (!result) return;
     const bytes = await generateAuditWorksheetPDF(productName || "Untitled product", lineItems, result, deMinimis);
     downloadPdf(bytes, `${slug(productName || "origynlx-worksheet")}-worksheet.pdf`);
+  }
+
+  async function handleDownloadBrokerPackage() {
+    if (!result) return;
+    const bytes = await generateBrokerPackagePDF({
+      productName: productName || "Untitled product",
+      hsSubheading,
+      tariffItem,
+      productionCountry,
+      importingParty,
+      lineItems,
+      result,
+      deMinimis,
+      certInfo,
+      savings,
+      engineering,
+    });
+    downloadPdf(bytes, (slug(productName || "origynlx-broker-package")) + "-broker-package.pdf");
   }
 
   function handleCsvFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -274,8 +305,33 @@ export default function CalculatorTool() {
   const selectedRuleRef = THRESHOLD_PICKER_OPTIONS.find((r) => r.id === categoryId) ?? null;
   const blocked = !licensed && remaining <= 0;
 
+  // P1: duty-savings estimate, recomputed from the same result
+  const savings = useMemo<DutySavingsResult | null>(() => {
+    if (!result) return null;
+    const annual = Number(annualImportValue) || 0;
+    if (annual <= 0) return null;
+    return calculateDutySavings({
+      annualImportValue: annual,
+      mfnDutyRatePercent: Number(mfnRateInput) || 0,
+      surchargeRatePercent: Number(surchargeRateInput) || 0,
+      entriesPerYear: Number(entriesPerYearInput) || 1,
+      importingParty,
+      exportCountry: productionCountry,
+      qualifies: result.qualifies,
+    });
+  }, [result, annualImportValue, mfnRateInput, surchargeRateInput, entriesPerYearInput, importingParty, productionCountry]);
+
   return (
     <div className="space-y-8">
+      {/* P3: batch qualifier banner */}
+      <div className="rounded-card border border-seal/20 bg-seal/[0.04] p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div>
+          <p className="text-sm font-medium text-paper">Importing more than one product?</p>
+          <p className="mt-1 text-[13px] text-paper/55">Batch-qualify your whole catalog in one upload - a qualification matrix for every SKU, with the governing USMCA rule per HS code.</p>
+        </div>
+        <a href="/batch" className="whitespace-nowrap rounded-full border border-seal/40 px-5 py-2 text-sm font-medium text-seal hover:bg-seal/10 transition-colors">Batch qualifier →</a>
+      </div>
+
       {/* Trial / license status bar */}
       <div className="rounded-card border border-white/12 bg-white/[0.03] p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         {checkingLicense ? (
@@ -581,6 +637,130 @@ export default function CalculatorTool() {
             </div>
           )}
 
+
+          {/* P1: dollar-savings view */}
+          <div className="mt-6 rounded-lg border border-seal/25 bg-seal/[0.05] p-5">
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-[13px] font-medium uppercase tracking-[0.08em] text-seal">What is this worth?</span>
+              {savings && (
+                <span className="text-sm font-semibold text-seal">
+                  {"$" + savings.totalAnnualAvoided.toLocaleString("en-US", { maximumFractionDigits: 0 }) + " saved per year"}
+                </span>
+              )}
+            </div>
+            <p className="mt-2 text-[12px] leading-relaxed text-paper/55">
+              USMCA-qualifying goods enter duty-free, skip the US Merchandise Processing Fee on entries from Canada and Mexico, and every universal surcharge layer to date has exempted them. Estimate the annual upside:
+            </p>
+            <div className="mt-4 grid gap-4 sm:grid-cols-4">
+              <div>
+                <label className="text-[12px] text-paper/45">Annual import value (USD)</label>
+                <input type="number" min={0} value={annualImportValue} onChange={(e) => setAnnualImportValue(e.target.value)} placeholder="e.g. 250000" className="mt-2 w-full rounded-lg border border-white/15 bg-white/[0.02] px-3 py-2 text-sm text-paper outline-none focus:border-seal/60" />
+              </div>
+              <div>
+                <label className="text-[12px] text-paper/45">MFN duty rate (%)</label>
+                <input type="number" min={0} step="0.1" value={mfnRateInput} onChange={(e) => setMfnRateInput(e.target.value)} placeholder="e.g. 4.2" className="mt-2 w-full rounded-lg border border-white/15 bg-white/[0.02] px-3 py-2 text-sm text-paper outline-none focus:border-seal/60" />
+              </div>
+              <div>
+                <label className="text-[12px] text-paper/45">Current surcharge layer (%)</label>
+                <input type="number" min={0} step="0.1" value={surchargeRateInput} onChange={(e) => setSurchargeRateInput(e.target.value)} placeholder="0" className="mt-2 w-full rounded-lg border border-white/15 bg-white/[0.02] px-3 py-2 text-sm text-paper outline-none focus:border-seal/60" />
+              </div>
+              <div>
+                <label className="text-[12px] text-paper/45">Entries per year</label>
+                <input type="number" min={1} value={entriesPerYearInput} onChange={(e) => setEntriesPerYearInput(e.target.value)} placeholder="12" className="mt-2 w-full rounded-lg border border-white/15 bg-white/[0.02] px-3 py-2 text-sm text-paper outline-none focus:border-seal/60" />
+              </div>
+            </div>
+            {savings && (
+              <div className="mt-4 grid gap-3 sm:grid-cols-4 text-[13px]">
+                <div className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2">
+                  <p className="text-paper/45">MFN duty avoided</p>
+                  <p className="mt-1 font-semibold text-paper">{"$" + savings.annualDutyAvoided.toLocaleString("en-US", { maximumFractionDigits: 0 })}</p>
+                </div>
+                <div className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2">
+                  <p className="text-paper/45">Surcharge avoided</p>
+                  <p className="mt-1 font-semibold text-paper">{"$" + savings.annualSurchargeAvoided.toLocaleString("en-US", { maximumFractionDigits: 0 })}</p>
+                </div>
+                <div className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2">
+                  <p className="text-paper/45">MPF avoided</p>
+                  <p className="mt-1 font-semibold text-paper">{"$" + savings.annualMpfAvoided.toLocaleString("en-US", { maximumFractionDigits: 0 })}</p>
+                </div>
+                <div className="rounded-lg border border-seal/30 bg-seal/10 px-3 py-2">
+                  <p className="text-paper/45">Total per year</p>
+                  <p className="mt-1 font-semibold text-seal">{"$" + savings.totalAnnualAvoided.toLocaleString("en-US", { maximumFractionDigits: 0 })}</p>
+                </div>
+              </div>
+            )}
+            {savings && savings.warnings.map((w, i) => (
+              <p key={i} className="mt-3 border-l-2 border-fail/40 pl-3 text-[12px] leading-relaxed text-paper/60">{w}</p>
+            ))}
+            {savings && (
+              <details className="mt-3 text-[12px] text-paper/50">
+                <summary className="cursor-pointer text-paper/60">How these numbers work</summary>
+                <ul className="mt-2 list-disc space-y-1.5 pl-4">
+                  {savings.notes.map((n, i) => (
+                    <li key={i} className="leading-relaxed">{n}</li>
+                  ))}
+                </ul>
+              </details>
+            )}
+          </div>
+
+          {/* P2: origin engineering */}
+          {engineering && (
+            <div className="mt-6 rounded-lg border border-white/10 bg-white/[0.02] p-5">
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-[13px] font-medium uppercase tracking-[0.08em] text-paper/50">Origin engineering</span>
+                {engineering.mode === "fix-it" ? (
+                  <span className="text-sm font-semibold text-fail">
+                    {"$" + (engineering.dollarGap ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 }) + " short of qualifying"}
+                  </span>
+                ) : (
+                  <span className="text-sm font-semibold text-pass">
+                    {"$" + (engineering.headroomValue ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 }) + " of headroom"}
+                  </span>
+                )}
+              </div>
+              {engineering.mode === "fix-it" ? (
+                <div className="mt-2">
+                  <p className="text-[12px] leading-relaxed text-paper/55">
+                    {"You need about $" + (engineering.dollarGap ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 }) + " more originating content. Each single-component swap below closes the gap on its own, cheapest first:"}
+                  </p>
+                  {engineering.cheapestQualifyingSwaps.length > 0 ? (
+                    <ul className="mt-3 space-y-2">
+                      {engineering.cheapestQualifyingSwaps.slice(0, 5).map((c) => (
+                        <li key={c.id} className="rounded-lg border border-pass/25 bg-pass/[0.05] px-3 py-2 text-[13px]">
+                          <span className="font-medium text-paper">{c.description}</span>
+                          <span className="text-paper/55">{" - swap for a USMCA-originating source ($" + c.value.toLocaleString("en-US") + ") and RVC goes to "}</span>
+                          <span className="font-semibold text-pass">{c.newRvcPercent + "%"}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="mt-3 text-[13px] text-paper/55">No single swap closes the gap - it will take a combination, or Article 4.12 de minimis if the failing inputs are small.</p>
+                  )}
+                </div>
+              ) : (
+                <div className="mt-2">
+                  <p className="text-[12px] leading-relaxed text-paper/55">
+                    {"Qualifying with " + result.marginPercent.toFixed(1) + " points of margin. You could add up to about $" + (engineering.headroomValue ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 }) + " of non-originating content before dropping below the threshold. Biggest single-point risk:"}
+                  </p>
+                  {engineering.swapCandidates.length > 0 && (
+                    <p className="mt-2 text-[13px] text-paper/60">
+                      {engineering.swapCandidates[0].description + " (" + engineering.swapCandidates[0].rvcGainPercent.toFixed(1) + " points if swapped)"}
+                    </p>
+                  )}
+                </div>
+              )}
+              <details className="mt-3 text-[12px] text-paper/50">
+                <summary className="cursor-pointer text-paper/60">Method and caveats</summary>
+                <ul className="mt-2 list-disc space-y-1.5 pl-4">
+                  {engineering.notes.map((n, i) => (
+                    <li key={i} className="leading-relaxed">{n}</li>
+                  ))}
+                </ul>
+              </details>
+            </div>
+          )}
+
           {!licensed && result.qualifies && (
             <p className="mt-6 text-[13px] leading-relaxed text-paper/60 bg-seal/[0.06] border border-seal/20 rounded-lg px-4 py-3">
               This one qualifies — a license gets you the signed-ready certificate for it, plus unlimited
@@ -598,6 +778,14 @@ export default function CalculatorTool() {
             >
               Download worksheet (PDF)
             </button>
+            {licensed && (
+              <button
+                onClick={handleDownloadBrokerPackage}
+                className="rounded-full border border-white/20 px-6 py-2.5 text-sm text-paper/80 hover:border-seal/60 hover:text-paper transition-colors"
+              >
+                Download broker review package (PDF)
+              </button>
+            )}
             {!showCert ? (
               licensed ? (
                 <button
@@ -615,6 +803,13 @@ export default function CalculatorTool() {
                 </a>
               )
             ) : null}
+          </div>
+
+          <div className="mt-4 rounded-lg border border-white/10 bg-white/[0.02] p-4 text-[13px] leading-relaxed text-paper/55">
+            <span className="font-medium text-paper/75">Want a licensed customs broker to review this qualification?</span>{" "}
+            OrigynLX assembles the evidence package; a licensed broker can review it.{" "}
+            <a href="/contact" className="font-medium text-seal hover:text-seal/80 transition-colors">Ask us for a broker referral</a>{" "}
+            - flat review fee, no obligation.
           </div>
 
           {showCert && (

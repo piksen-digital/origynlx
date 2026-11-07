@@ -10,6 +10,7 @@ const COPY = {
     links: [
       { href: "/calculator", label: "Calculator" },
       { href: "/pricing", label: "Pricing" },
+      { href: "/batch", label: "Batch" },
       { href: "/contact", label: "Contact" },
     ],
     ctaDefault: { label: "Start free trial", href: "/calculator" },
@@ -21,6 +22,7 @@ const COPY = {
     links: [
       { href: "/calculator", label: "Calculadora" },
       { href: "/pricing", label: "Precios" },
+      { href: "/batch", label: "Lote" },
       { href: "/contact", label: "Contacto" },
     ],
     ctaDefault: { label: "Prueba gratis", href: "/calculator" },

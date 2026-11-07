@@ -1,0 +1,31 @@
+import Nav from "@/components/Nav";
+import Footer from "@/components/Footer";
+import BatchQualifier from "@/components/BatchQualifier";
+
+export const metadata = { title: "Batch qualifier - OrigynLX" };
+
+export default function BatchPage() {
+  return (
+    <main className="relative min-h-screen overflow-x-hidden bg-ink">
+      <Nav />
+      <section className="pt-32 pb-20 sm:pt-40 sm:pb-28">
+        <div className="mx-auto max-w-content px-5 sm:px-6 lg:px-12">
+          <span className="text-xs font-medium uppercase tracking-[0.08em] text-paper/50">Batch qualification</span>
+          <h1 className="mt-4 font-display text-4xl font-semibold leading-tight text-paper sm:text-5xl">
+            Your whole catalog, one upload.
+          </h1>
+          <p className="mt-4 max-w-xl text-base leading-relaxed text-paper/60 sm:text-lg">
+            Upload a CSV of finished products and their bills of materials. OrigynLX runs every SKU
+            through the same rule engine, matches each HS code to its sourced USMCA rule, and returns
+            a qualification matrix - free to view, licensed to export.
+          </p>
+
+          <div className="mt-12 max-w-5xl">
+            <BatchQualifier />
+          </div>
+        </div>
+      </section>
+      <Footer />
+    </main>
+  );
+}

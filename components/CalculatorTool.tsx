@@ -33,6 +33,7 @@ const newId = () => `li_${++idCounter}_${Date.now()}`;
 export default function CalculatorTool() {
   const [productName, setProductName] = useState("");
   const [transactionValue, setTransactionValue] = useState<number>(0);
+  const [netCost, setNetCost] = useState<string>("");
   type RuleBasis = "tariff-shift" | "rvc" | "tariff-shift-or-rvc" | "special" | "custom";
   type RVCMethod = "transaction-value" | "net-cost";
   type OriginStatus = "originating" | "non-originating" | "undetermined";
@@ -86,6 +87,9 @@ export default function CalculatorTool() {
       .map((g) => { const take = Math.max(0, Math.min(g.options.length, left)); left -= take; return { sector: g.sector, options: g.options.slice(0, take) }; })
       .filter((g) => g.options.length > 0);
   }, [visibleRuleGroups, totalVisibleOptions]);
+
+  const hsChapterDigits = (hsHeading.replace(/\D+/g, "") + hsSubheading.replace(/\D+/g, "")).slice(0, 2);
+  const isTextileChapter = hsChapterDigits.length === 2 && Number(hsChapterDigits) >= 50 && Number(hsChapterDigits) <= 63;
 
   const [importingParty, setImportingParty] = useState("United States");
   const [productionCountry, setProductionCountry] = useState("");
@@ -182,6 +186,7 @@ export default function CalculatorTool() {
     const r = calculateRVC({
       productName,
       transactionValue,
+      netCost: method === "net-cost" ? Number(netCost) || undefined : undefined,
       method,
       thresholdPercent: threshold,
       lineItems,
@@ -435,6 +440,13 @@ export default function CalculatorTool() {
               <label className="flex items-center gap-3 rounded-lg border border-white/10 px-3 py-2.5 text-sm text-paper/70"><input type="radio" name="rvc-method" checked={rvcMethod === "net-cost"} onChange={() => handleRvcMethodChange("net-cost")} className="cursor-pointer" /> Net cost</label>
             </div>
             <div className="mt-4">
+            {method === "net-cost" && (
+              <div>
+                <label className="text-[12px] text-paper/45">Net cost of the good (USD)</label>
+                <input type="number" min={0} value={netCost} onChange={(e) => setNetCost(e.target.value)} placeholder="Total cost minus marketing/royalties/shipping-packing/non-allowable interest" className="mt-2 w-full rounded-lg border border-white/15 bg-white/[0.02] px-4 py-2.5 text-paper outline-none focus:border-seal/60" />
+                <p className="mt-2 text-[11px] leading-relaxed text-paper/40">USMCA net cost = total cost less sales promotion, marketing and after-sales service costs, royalties, shipping and packing costs, and non-allowable interest (Article 4.5). Mandatory for finished motor vehicles.</p>
+              </div>
+            )}
               <label className="text-[12px] text-paper/45">Threshold (%)</label>
               <input type="number" min={0} max={100} value={threshold} onChange={(e) => { setThreshold(Number(e.target.value)); setCategoryId(""); }} className="mt-2 w-full rounded-lg border border-white/15 bg-white/[0.02] px-4 py-2.5 text-paper outline-none focus:border-seal/60" />
             </div>
@@ -458,7 +470,8 @@ export default function CalculatorTool() {
           <p className="mt-2 text-[12px] text-paper/40">
             {totalPickerOptions} sourced USMCA thresholds across {ruleGroupCount} sectors — type an HS heading or subheading above to narrow this list.
             {totalVisibleOptions > cappedVisibleOptions && ` Showing the first ${cappedVisibleOptions} matches — narrow by HS code to see more.`}
-            {hsSubheading.trim() !== "" && totalVisibleOptions === 0 && !selectedRuleRef && " No sourced rule matched that HS code — set the threshold manually."}
+            {totalVisibleOptions === 0 && !selectedRuleRef && isTextileChapter && " Textiles & apparel (HS chapters 50-63) have no RVC thresholds under USMCA — qualification runs through the yarn/fiber-forward tariff shift plus supply and cut-and-sew assembly rules (HTSUS GN 11(o)), not RVC."}
+            {totalVisibleOptions === 0 && !selectedRuleRef && !isTextileChapter && hsSubheading.trim() !== "" && " No sourced rule matched that HS code — set the threshold manually."}
           </p>
           {(() => { const ref = selectedRuleRef; if (!ref) return null; const badge = ref.auditStatus === "human_verified" ? { cls: "bg-pass/15 text-pass", text: "Human verified" } : ref.auditStatus === "primary_sourced_unaudited" ? { cls: "bg-seal/15 text-seal", text: "Primary-sourced, audit pending" } : { cls: "bg-fail/15 text-fail", text: "Unverified" }; return (
             <div className="mt-3 rounded-lg border border-white/10 bg-white/[0.02] p-4 space-y-2">
@@ -516,7 +529,7 @@ export default function CalculatorTool() {
         </div>
 
         <div className="rounded-lg border border-white/10 bg-white/[0.02] p-4">
-          <div className="flex items-start gap-3"><span className="mt-0.5 text-seal">◈</span><div><p className="text-[13px] font-medium text-paper/75">De minimis safeguard</p><p className="mt-1 text-[12px] leading-relaxed text-paper/55">Even if your product qualifies under RVC, non-originating materials cannot exceed 10% of transaction value (or 10% of cost for net-cost calculations). The calculator checks this separately and will flag if you're close.</p></div></div>
+          <div className="flex items-start gap-3"><span className="mt-0.5 text-seal">◈</span><div><p className="text-[13px] font-medium text-paper/75">De minimis safeguard</p><p className="mt-1 text-[12px] leading-relaxed text-paper/55">USMCA de minimis (Art. 4.12) is a separate allowance, not an RVC threshold: if the only problem is inputs that fail a required tariff shift, the good can still qualify when those materials are ≤ 10% of its transaction value (or total cost, where the net cost method applies). Textiles (ch. 50-63) use a weight-based test instead.</p></div></div>
         </div>
 
         <button onClick={handleCalculate} disabled={blocked} className="w-full rounded-full bg-seal text-ink text-sm font-semibold h-12 hover:bg-seal/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">Calculate RVC</button>

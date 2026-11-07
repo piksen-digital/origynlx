@@ -6264,7 +6264,6 @@ export const MACHINERY_ELECTRICAL_SECTOR_FILE: UsmcaSectorFile = {
       "Headings 8507.90 battery cells and other chapter 85 provisions cited as exceptions (own rules in this file or the core types file)",
     ],
   },
-  sources: SRC,
 };
 
 export default MACHINERY_ELECTRICAL_SECTOR_FILE;

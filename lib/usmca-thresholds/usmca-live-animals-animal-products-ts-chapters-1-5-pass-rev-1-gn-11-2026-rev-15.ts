@@ -80,7 +80,7 @@ export const LIVE_ANIMALS_RULES: UsmcaRule[] = [
     tariffShiftRule: "A change to headings 0101 through 0106 from any other chapter.",
     effectiveFrom: "2020-07-01",
     verified: true,
-    auditStatus: "primary_sourced_audited",
+    auditStatus: "human_verified",
     sources: SRC,
   },
   // ---------------- Chapter 2 ----------------
@@ -94,7 +94,7 @@ export const LIVE_ANIMALS_RULES: UsmcaRule[] = [
     tariffShiftRule: "A change to headings 0201 through 0210 from any other chapter.",
     effectiveFrom: "2020-07-01",
     verified: true,
-    auditStatus: "primary_sourced_audited",
+    auditStatus: "human_verified",
     sources: SRC,
   },
   // ---------------- Chapter 3 ----------------

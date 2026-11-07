@@ -202,7 +202,7 @@ export const STONE_CERAMICS_GLASS_RULES: UsmcaRule[] = [
     tariffShiftRule: "A change to subheading 7002.20 from any other chapter.",
     effectiveFrom: "2020-07-01",
     verified: true,
-    auditStatus: "human_verifiedited",
+    auditStatus: "human_verified",
     notes:
       "ASYMMETRY: 7002.20 requires a shift from any other CHAPTER, while its neighbours 7002.10 and 7002.31 only require any other HEADING. Transcribed as printed.",
     sources: SRC,

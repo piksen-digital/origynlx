@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   calculateRVC,
   checkDeMinimis,
@@ -21,7 +21,11 @@ import { generateCertificatePDF, type CertifierInfo } from "@/lib/certificate-pd
 import { generateAuditWorksheetPDF } from "@/lib/audit-worksheet-pdf";
 import { parseBOMCsv, downloadBomTemplate } from "@/lib/csv-import";
 import { listSavedBOMs, saveBOM, deleteSavedBOM, type SavedBOM } from "@/lib/saved-boms";
-import { THRESHOLD_PICKER_OPTIONS as THRESHOLD_REFERENCES } from "@/lib/usmca-rule-picker";
+import {
+  THRESHOLD_PICKER_OPTIONS,
+  buildGroupedThresholdPickerOptions,
+  type ThresholdPickerReference,
+} from "@/lib/usmca-rule-picker";
 
 let idCounter = 0;
 const newId = () => `li_${++idCounter}_${Date.now()}`;
@@ -43,6 +47,46 @@ export default function CalculatorTool() {
   const [tariffItem, setTariffItem] = useState("");
   const [annexTariffItem, setAnnexTariffItem] = useState("");
   const [showAdvancedClassification, setShowAdvancedClassification] = useState(false);
+
+  const ruleGroups = useMemo(() => buildGroupedThresholdPickerOptions(THRESHOLD_PICKER_OPTIONS), []);
+  const totalPickerOptions = THRESHOLD_PICKER_OPTIONS.length;
+  const ruleGroupCount = ruleGroups.length;
+
+  const visibleRuleGroups = useMemo(() => {
+    const sub4 = hsSubheading.replace(/\D+/g, "").slice(0, 4);
+    const head2 = hsHeading.replace(/\D+/g, "").slice(0, 2);
+    const chapterMatch = (r: ThresholdPickerReference) => head2.length === 2 && r.chapters.includes(head2);
+    const subMatch = (r: ThresholdPickerReference) => {
+      const codes = (r.hsRange.match(/\d{4}/g) || []).map(Number);
+      if (codes.length >= 2) return Number(sub4) >= codes[0] && Number(sub4) <= codes[codes.length - 1];
+      if (codes.length === 1) return Number(sub4) === codes[0];
+      return false;
+    };
+    const keep = (r: ThresholdPickerReference) => {
+      if (sub4.length === 4) return subMatch(r) || chapterMatch(r);
+      if (head2.length === 2) return chapterMatch(r);
+      return true;
+    };
+    const groups = ruleGroups
+      .map((g) => ({ sector: g.sector, options: g.options.filter(keep) }))
+      .filter((g) => g.options.length > 0);
+    const selected = THRESHOLD_PICKER_OPTIONS.find((r) => r.id === categoryId);
+    if (selected && !groups.some((g) => g.options.some((o) => o.id === selected.id))) {
+      groups.unshift({ sector: selected.sector, options: [selected] });
+    }
+    return groups;
+  }, [ruleGroups, hsSubheading, hsHeading, categoryId]);
+
+  const totalVisibleOptions = visibleRuleGroups.reduce((n, g) => n + g.options.length, 0);
+  const cappedVisibleOptions = Math.min(totalVisibleOptions, 400);
+  const cappedRuleGroups = useMemo(() => {
+    if (totalVisibleOptions <= 400) return visibleRuleGroups;
+    let left = 400;
+    return visibleRuleGroups
+      .map((g) => { const take = Math.max(0, Math.min(g.options.length, left)); left -= take; return { sector: g.sector, options: g.options.slice(0, take) }; })
+      .filter((g) => g.options.length > 0);
+  }, [visibleRuleGroups, totalVisibleOptions]);
+
   const [importingParty, setImportingParty] = useState("United States");
   const [productionCountry, setProductionCountry] = useState("");
   const [lineItems, setLineItems] = useState<BOMLineItem[]>([emptyLineItem(newId()), emptyLineItem(newId())]);
@@ -123,13 +167,14 @@ export default function CalculatorTool() {
 
   function handleCategoryChange(id: string) {
     setCategoryId(id);
-    const ref = THRESHOLD_REFERENCES.find((r) => r.id === id);
-    if (ref) {
-      setRuleBasis("rvc");
-      setRvcMethod(ref.method);
-      setMethod(ref.method);
-      setThreshold(ref.thresholdPercent);
+    const ref = THRESHOLD_PICKER_OPTIONS.find((r) => r.id === id);
+    if (!ref) return;
+    if (ref.ruleBasis === "rvc" || ref.ruleBasis === "tariff-shift-or-rvc" || ref.ruleBasis === "special") {
+      setRuleBasis(ref.ruleBasis);
     }
+    setRvcMethod(ref.method);
+    setMethod(ref.method);
+    setThreshold(ref.thresholdPercent);
   }
 
   function handleCalculate() {
@@ -221,6 +266,7 @@ export default function CalculatorTool() {
     setSavedBOMs(listSavedBOMs());
   }
 
+  const selectedRuleRef = THRESHOLD_PICKER_OPTIONS.find((r) => r.id === categoryId) ?? null;
   const blocked = !licensed && remaining <= 0;
 
   return (
@@ -381,7 +427,7 @@ export default function CalculatorTool() {
           </select>
         </div>
 
-        {(ruleBasis === "rvc" || ruleBasis === "tariff-shift-or-rvc") && (
+        {(ruleBasis === "rvc" || ruleBasis === "tariff-shift-or-rvc" || (ruleBasis === "special" && selectedRuleRef)) && (
           <div className="rounded-lg border border-white/10 bg-white/[0.02] p-4">
             <label className="text-[13px] font-medium text-paper/60">RVC method</label>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -400,12 +446,30 @@ export default function CalculatorTool() {
         <div>
           <label className="text-[13px] font-medium text-paper/60">Verified rule category (optional)</label>
           <select value={categoryId} onChange={(e) => handleCategoryChange(e.target.value)} className="mt-2 w-full rounded-lg border border-white/15 bg-white/[0.02] px-4 py-2.5 text-paper outline-none focus:border-seal/60">
-            {categoryId === "" && <option value="">Custom / manually set</option>}
-            {THRESHOLD_REFERENCES.map((r) => <option key={r.id} value={r.id}>{r.label} — {r.thresholdPercent}% ({r.method === "net-cost" ? "net cost" : "transaction value"})</option>)}
+            <option value="">Custom / manually set</option>
+            {cappedRuleGroups.map((g) => (
+              <optgroup key={g.sector} label={g.sector}>
+                {g.options.map((r) => (
+                  <option key={r.id} value={r.id}>{r.hsRange} — {r.thresholdPercent}% ({r.method === "net-cost" ? "net cost" : "transaction value"})</option>
+                ))}
+              </optgroup>
+            ))}
           </select>
-          {(() => { const ref = THRESHOLD_REFERENCES.find((r) => r.id === categoryId); if (!ref) return null; return (
+          <p className="mt-2 text-[12px] text-paper/40">
+            {totalPickerOptions} sourced USMCA thresholds across {ruleGroupCount} sectors — type an HS heading or subheading above to narrow this list.
+            {totalVisibleOptions > cappedVisibleOptions && ` Showing the first ${cappedVisibleOptions} matches — narrow by HS code to see more.`}
+            {hsSubheading.trim() !== "" && totalVisibleOptions === 0 && !selectedRuleRef && " No sourced rule matched that HS code — set the threshold manually."}
+          </p>
+          {(() => { const ref = selectedRuleRef; if (!ref) return null; const badge = ref.auditStatus === "human_verified" ? { cls: "bg-pass/15 text-pass", text: "Human verified" } : ref.auditStatus === "primary_sourced_unaudited" ? { cls: "bg-seal/15 text-seal", text: "Primary-sourced, audit pending" } : { cls: "bg-fail/15 text-fail", text: "Unverified" }; return (
             <div className="mt-3 rounded-lg border border-white/10 bg-white/[0.02] p-4 space-y-2">
-              <span className={`text-[11px] font-semibold uppercase tracking-wide rounded-full px-2 py-0.5 ${ref.verified ? "bg-pass/15 text-pass" : "bg-fail/15 text-fail"}`}>{ref.verified ? "Sourced" : "Unverified"}</span>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className={`text-[11px] font-semibold uppercase tracking-wide rounded-full px-2 py-0.5 ${badge.cls}`}>{badge.text}</span>
+                <span className="text-[12px] text-paper/45">{ref.sector} · HS {ref.hsRange}</span>
+              </div>
+              <p className="text-[13px] font-medium text-paper/80">{ref.label}</p>
+              <p className="text-[12px] text-paper/55">Threshold: {ref.thresholdPercent}% {ref.method === "net-cost" ? "net cost" : "transaction value"}{ref.ruleEffectiveFrom ? ` · effective ${ref.ruleEffectiveFrom}` : ""}{ref.ruleEffectiveTo ? ` until ${ref.ruleEffectiveTo}` : ""}</p>
+              {ref.tariffShiftRule && <p className="text-[12px] leading-relaxed text-paper/55"><span className="font-medium text-paper/70">Tariff-shift rule: </span>{ref.tariffShiftRule}</p>}
+              {ref.condition && <p className="text-[12px] leading-relaxed text-paper/55"><span className="font-medium text-paper/70">RVC path condition: </span>{ref.condition}</p>}
               {ref.notes && <p className="text-[13px] leading-relaxed text-paper/60">{ref.notes}</p>}
               {ref.sources.length > 0 && <ul className="space-y-1">{ref.sources.map((s) => <li key={s.url}><a href={s.url} target="_blank" rel="noopener noreferrer" className="text-[12px] text-seal hover:text-seal/80 transition-colors">{s.title}</a></li>)}</ul>}
             </div>

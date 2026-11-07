@@ -23,6 +23,7 @@ export interface LicenseRecord {
   currencyCode: string;
   pesepayReferenceNumber?: string;
   pesepayPollUrl?: string;
+  paypalOrderId?: string;
   licenseKey?: string;
   emailSentAt?: string;
   createdAt: string;
@@ -75,6 +76,28 @@ export async function attachPesepayTracking(
     pesepayPollUrl: pollUrl,
   });
   await kv.set(refIndexKey(pesepayReferenceNumber), merchantReference);
+}
+
+/**
+ * PayPal flow: stores the order id on the pending record and indexes it,
+ * mirroring attachPesepayTracking. Activation goes through the same
+ * idempotent activateLicense() path with "paypal_order_<orderId>" in the
+ * reference slot.
+ */
+export async function attachPaypalOrderId(
+  merchantReference: string,
+  paypalOrderId: string
+): Promise<void> {
+  const existing = await kv.get<LicenseRecord>(keyFor(merchantReference));
+  if (!existing) {
+    console.error("attachPaypalOrderId: no pending record found for " + merchantReference);
+    return;
+  }
+  await kv.set(keyFor(merchantReference), {
+    ...existing,
+    paypalOrderId,
+  });
+  await kv.set("paypalorder:" + paypalOrderId, merchantReference);
 }
 
 /**

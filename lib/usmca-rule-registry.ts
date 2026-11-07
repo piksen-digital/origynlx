@@ -14,25 +14,25 @@
  */
 import type { UsmcaRule, UsmcaSectorFile } from "./usmca-rule-types";
 import { AUTOMOTIVE_SECTOR_FILE } from "./usmca-thresholds/automotive";
-import { CHEMICALS_PLASTICS_SECTOR_FILE } from "./usmca-thresholds/usmca-chemicals-ts-chapters-28-38-pass-rev-3-gn-11-2026-rev-15.ts";
-import { MACHINERY_ELECTRICAL_SECTOR_FILE } from "./usmca-thresholds/usmca-machinery-electrical-ts-chapters-84-85-pass-rev-3-gn-11-2026-rev-15-rebuilt-on-the-automotive-optics-record-template.ts";
-import { TEXTILES_APPAREL_SECTOR_FILE } from "./usmca-thresholds/usmca-textiles-apparel-ts-chapters-50-63-pass-rev-1-gn-11-2026-rev-15-fresh-authoritative-build.ts";
-import { ARMS_ART_SECTOR_FILE } from "./usmca-thresholds/usmca-arms-and-works-of-art-ts-chapters-93-&-97-pass-rev-1-gn-11-2026-rev-15.ts";
-import { BASE_METALS_SECTOR_FILE } from "./usmca-thresholds/usmca-basemetals-ts-chapters-72-83-pass.ts";
-import { FATS_OILS_SECTOR_FILE } from "./usmca-thresholds/usmca-fats-oils-ts-chapter-15-pass-rev-1-gn-11-2026-rev-15.ts";
-import { LIVE_ANIMALS_SECTOR_FILE } from "./usmca-thresholds/usmca-live-animals-animal-products-ts-chapters-1-5-pass-rev-1-gn-11-2026-rev-15.ts";
-import { MINERAL_PRODUCTS_SECTOR_FILE } from "./usmca-thresholds/usmca-mineral-products-ts-chapters-25-27-pass-rev-1-gn-11-2026-rev-15.ts";
-import { MISC_MANUFACTURED_SECTOR_FILE } from "./usmca-thresholds/usmca-misc-manufactured-ts-chapters-94-96-pass-rev-1-gn-11-2026-rev-15.ts";
-import { OPTICS_SECTOR_FILE } from "./usmca-thresholds/usmca-optical-photographic-medical-clocks-ts-chapters-90-92-pass-rev-1-gn-11-2026-rev-15.ts";
-import { PLASTICS_RUBBER_SECTOR_FILE } from "./usmca-thresholds/usmca-plastics-rubber-ts-chapters-39-40-pass-rev-1-gn-11-2026-rev-15.ts";
-import { PRECIOUS_SECTOR_FILE } from "./usmca-thresholds/usmca-precious-metals-ts-chapter-71-pass-rev-1-gn-11-2026-rev-15.ts";
-import { PREPARED_FOODSTUFFS_SECTOR_FILE } from "./usmca-thresholds/usmca-prepared-foodstuffs-ts-chapters-16-24-pass-rev-1-gn-11-2026-rev-15.ts";
-import { PULP_PAPER_SECTOR_FILE } from "./usmca-thresholds/usmca-pulp-paper-printed-matter-ts-chapters-47-49-pass-rev-1-gn-11-2026-rev-15.ts";
-import { HIDES_LEATHER_FURS_SECTOR_FILE } from "./usmca-thresholds/usmca-raw-hides-leather-furs-ts-chapters-41-43-pass-rev-1-gn-11-2026-rev-15.ts";
-import { STONE_CERAMICS_GLASS_SECTOR_FILE } from "./usmca-thresholds/usmca-stone-ceramics-glass-ts-chapters-68-70-pass-rev-1-gn-11-2026-rev-15.ts";
-import { TRANSPORT_SECTOR_FILE } from "./usmca-thresholds/usmca-transport-ts-chapters-86-89-pass-rev-3-gn-11-2026-rev-15-rebuilt-on-the-automotive-optics-record-template.ts";
-import { VEGETABLE_PRODUCTS_SECTOR_FILE } from "./usmca-thresholds/usmca-vegetable-products-ts-chapters-6-14-pass-rev-1-gn-11-2026-rev-15.ts";
-import { WOOD_SECTOR_FILE } from "./usmca-thresholds/usmca-wood-and-article-thereof-ts-chapters-44-46-pass-rev-1-gn-11-2026-rev-15.ts";
+import { CHEMICALS_PLASTICS_SECTOR_FILE } from "./usmca-thresholds/usmca-chemicals-ts-chapters-28-38-pass-rev-3-gn-11-2026-rev-15";
+import { MACHINERY_ELECTRICAL_SECTOR_FILE } from "./usmca-thresholds/usmca-machinery-electrical-ts-chapters-84-85-pass-rev-3-gn-11-2026-rev-15-rebuilt-on-the-automotive-optics-record-template";
+import { TEXTILES_APPAREL_SECTOR_FILE } from "./usmca-thresholds/usmca-textiles-apparel-ts-chapters-50-63-pass-rev-1-gn-11-2026-rev-15-fresh-authoritative-build";
+import { ARMS_ART_SECTOR_FILE } from "./usmca-thresholds/usmca-arms-and-works-of-art-ts-chapters-93-&-97-pass-rev-1-gn-11-2026-rev-15";
+import { BASE_METALS_SECTOR_FILE } from "./usmca-thresholds/usmca-basemetals-ts-chapters-72-83-pass";
+import { FATS_OILS_SECTOR_FILE } from "./usmca-thresholds/usmca-fats-oils-ts-chapter-15-pass-rev-1-gn-11-2026-rev-15";
+import { LIVE_ANIMALS_SECTOR_FILE } from "./usmca-thresholds/usmca-live-animals-animal-products-ts-chapters-1-5-pass-rev-1-gn-11-2026-rev-15";
+import { MINERAL_PRODUCTS_SECTOR_FILE } from "./usmca-thresholds/usmca-mineral-products-ts-chapters-25-27-pass-rev-1-gn-11-2026-rev-15";
+import { MISC_MANUFACTURED_SECTOR_FILE } from "./usmca-thresholds/usmca-misc-manufactured-ts-chapters-94-96-pass-rev-1-gn-11-2026-rev-15";
+import { OPTICS_SECTOR_FILE } from "./usmca-thresholds/usmca-optical-photographic-medical-clocks-ts-chapters-90-92-pass-rev-1-gn-11-2026-rev-15";
+import { PLASTICS_RUBBER_SECTOR_FILE } from "./usmca-thresholds/usmca-plastics-rubber-ts-chapters-39-40-pass-rev-1-gn-11-2026-rev-15";
+import { PRECIOUS_SECTOR_FILE } from "./usmca-thresholds/usmca-precious-metals-ts-chapter-71-pass-rev-1-gn-11-2026-rev-15";
+import { PREPARED_FOODSTUFFS_SECTOR_FILE } from "./usmca-thresholds/usmca-prepared-foodstuffs-ts-chapters-16-24-pass-rev-1-gn-11-2026-rev-15";
+import { PULP_PAPER_SECTOR_FILE } from "./usmca-thresholds/usmca-pulp-paper-printed-matter-ts-chapters-47-49-pass-rev-1-gn-11-2026-rev-15";
+import { HIDES_LEATHER_FURS_SECTOR_FILE } from "./usmca-thresholds/usmca-raw-hides-leather-furs-ts-chapters-41-43-pass-rev-1-gn-11-2026-rev-15";
+import { STONE_CERAMICS_GLASS_SECTOR_FILE } from "./usmca-thresholds/usmca-stone-ceramics-glass-ts-chapters-68-70-pass-rev-1-gn-11-2026-rev-15";
+import { TRANSPORT_SECTOR_FILE } from "./usmca-thresholds/usmca-transport-ts-chapters-86-89-pass-rev-3-gn-11-2026-rev-15-rebuilt-on-the-automotive-optics-record-template";
+import { VEGETABLE_PRODUCTS_SECTOR_FILE } from "./usmca-thresholds/usmca-vegetable-products-ts-chapters-6-14-pass-rev-1-gn-11-2026-rev-15";
+import { WOOD_SECTOR_FILE } from "./usmca-thresholds/usmca-wood-and-article-thereof-ts-chapters-44-46-pass-rev-1-gn-11-2026-rev-15";
 
 export const ALL_SECTOR_FILES: UsmcaSectorFile[] = [
   AUTOMOTIVE_SECTOR_FILE,

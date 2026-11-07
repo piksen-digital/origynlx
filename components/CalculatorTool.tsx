@@ -484,7 +484,7 @@ export default function CalculatorTool() {
               {ref.tariffShiftRule && <p className="text-[12px] leading-relaxed text-paper/55"><span className="font-medium text-paper/70">Tariff-shift rule: </span>{ref.tariffShiftRule}</p>}
               {ref.condition && <p className="text-[12px] leading-relaxed text-paper/55"><span className="font-medium text-paper/70">RVC path condition: </span>{ref.condition}</p>}
               {ref.notes && <p className="text-[13px] leading-relaxed text-paper/60">{ref.notes}</p>}
-              {ref.sources.length > 0 && <ul className="space-y-1">{ref.sources.map((s) => <li key={s.url}><a href={s.url} target="_blank" rel="noopener noreferrer" className="text-[12px] text-seal hover:text-seal/80 transition-colors">{s.title}</a></li>)}</ul>}
+              {ref.sources.length > 0 && <ul className="space-y-1">{ref.sources.map((s: { url: string; title: string }) => <li key={s.url}><a href={s.url} target="_blank" rel="noopener noreferrer" className="text-[12px] text-seal hover:text-seal/80 transition-colors">{s.title}</a></li>)}</ul>}
             </div>
           ); })()}
         </div>

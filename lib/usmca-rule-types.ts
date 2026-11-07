@@ -53,7 +53,12 @@ export interface RvcOption {
 }
 
 export interface ThresholdPhase {
-  effectiveFrom: string;
+  /**
+   * Optional: the rev.3 record template stores always-available alternative
+   * RVC branches as undated phases ({ rvcOptions: [...] }). A phase with no
+   * effectiveFrom is treated as always in force.
+   */
+  effectiveFrom?: string;
   effectiveTo?: string;
   rvcOptions: RvcOption[];
   notes?: string;
@@ -108,7 +113,9 @@ export interface UsmcaSectorFile {
   mergeEligible: boolean;
   auditStatus: AuditStatus;
   rules: UsmcaRule[];
-  watchItems?: WatchItem[];
+  /** Prose watch items; the structured WatchItem shape is reserved for
+   * future use and is not yet emitted by any sector file. */
+  watchItems?: string[];
   sourceFirewall?: {
     treatyBaseline: string;
     usImplementation: string;

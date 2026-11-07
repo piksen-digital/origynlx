@@ -1,8 +1,5 @@
-import {
-  LIVE_USMCA_RULES,
-  type UsmcaRule,
-} from "./usmca-rule-registry";
-import type { AuditStatus, RvcOption, RuleBasis } from "./usmca-rule-types";
+import { LIVE_USMCA_RULES } from "./usmca-rule-registry";
+import type { AuditStatus, RvcOption, RuleBasis, UsmcaRule } from "./usmca-rule-types";
 
 /**
  * Rule bases that expose a percentage the calculator can actually set.

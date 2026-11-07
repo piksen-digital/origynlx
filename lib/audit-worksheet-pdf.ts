@@ -1,5 +1,17 @@
-import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import type { BOMLineItem, RVCResult, DeMinimisResult } from "./rvc-calculator";
+import {
+  BRAND,
+  MARGIN,
+  PAGE_W,
+  newBrandedDoc,
+  heading,
+  bodyText,
+  keyLine,
+  statusBadge,
+  ensureSpace,
+  wrappedBody,
+  drawFooters,
+} from "./pdf-branding";
 
 export async function generateAuditWorksheetPDF(
   productName: string,
@@ -7,108 +19,96 @@ export async function generateAuditWorksheetPDF(
   result: RVCResult,
   deMinimis: DeMinimisResult | null
 ): Promise<Uint8Array> {
-  const doc = await PDFDocument.create();
-  let page = doc.addPage([612, 792]);
-  const font = await doc.embedFont(StandardFonts.Helvetica);
-  const bold = await doc.embedFont(StandardFonts.HelveticaBold);
-  const mono = await doc.embedFont(StandardFonts.Courier);
+  const ctx = await newBrandedDoc(
+    "USMCA Qualification Worksheet",
+    "Internal audit record - generated " + new Date().toLocaleString("en-US")
+  );
 
-  const margin = 54;
-  let y = 792 - margin;
-  const ink = rgb(0.06, 0.06, 0.07);
-  const gray = rgb(0.4, 0.4, 0.42);
+  bodyText(ctx, "Product: " + productName, { size: 12.5, font: ctx.fonts.bold });
+  bodyText(
+    ctx,
+    "Method: " + (result.basis === "net-cost" ? "Net cost (Article 4.5(2))" : "Transaction value (Article 4.5(1))"),
+    { size: 9, color: BRAND.gray }
+  );
+  ctx.y -= 4;
 
-  function ensureSpace(needed: number) {
-    if (y - needed < margin) {
-      page = doc.addPage([612, 792]);
-      y = 792 - margin;
-    }
+  heading(ctx, "RVC determination");
+  keyLine(ctx, "Transaction value", "$" + result.transactionValue.toLocaleString("en-US"));
+  if (result.basis === "net-cost" && result.netCost !== null) {
+    keyLine(ctx, "Net cost", "$" + result.netCost.toLocaleString("en-US"));
   }
-
-  function text(str: string, size = 10, f = font, color = ink, x = margin) {
-    ensureSpace(size + 4);
-    page.drawText(str, { x, y, size, font: f, color });
-  }
-  function line(gap = 16) {
-    y -= gap;
-  }
-
-  text("OrigynLX — Internal Qualification Worksheet", 16, bold);
-  line(18);
-  text(`Generated ${new Date().toLocaleString()} — for internal recordkeeping, not a signed certificate.`, 9, font, gray);
-  line(28);
-
-  text(`Product: ${productName}`, 12, bold);
-  line(22);
-
-  text("Regional Value Content", 11, bold);
-  line(16);
-  text(`Transaction value: $${result.transactionValue.toLocaleString()}`, 10);
-  line(14);
-  text(`Originating value: $${result.originatingValue.toLocaleString()}`, 10);
-  line(14);
-  text(`Non-originating value: $${result.nonOriginatingValue.toLocaleString()}`, 10);
-  line(14);
-  text(`RVC result: ${result.rvcPercent}%  vs  ${result.thresholdPercent}% threshold  ->  ${result.qualifies ? "QUALIFIES" : "DOES NOT QUALIFY"}`, 11, bold);
-  line(14);
-  text(`Margin above/below threshold: ${result.marginPercent > 0 ? "+" : ""}${result.marginPercent} points`, 10, font, gray);
-  line(26);
+  keyLine(ctx, "Originating value", "$" + result.originatingValue.toLocaleString("en-US"));
+  keyLine(ctx, "Non-originating value", "$" + result.nonOriginatingValue.toLocaleString("en-US"));
+  ensureSpace(ctx, 26, "OrigynLX");
+  statusBadge(ctx, result.qualifies);
+  ctx.page.drawText(
+    "RVC result: " + result.rvcPercent + "%   vs   " + result.thresholdPercent + "% threshold",
+    { x: MARGIN, y: ctx.y, size: 11.5, font: ctx.fonts.bold, color: BRAND.ink }
+  );
+  ctx.y -= 17;
+  bodyText(
+    ctx,
+    "Margin above/below threshold: " + (result.marginPercent > 0 ? "+" : "") + result.marginPercent + " percentage points",
+    { size: 9, color: BRAND.gray }
+  );
+  ctx.y -= 4;
 
   if (deMinimis) {
-    text("De Minimis Reference Check (Article 4.12)", 11, bold);
-    line(16);
-    text(`Non-originating value as % of transaction value: ${deMinimis.nonOriginatingPercent}% (threshold ${deMinimis.thresholdPercent}%)`, 10);
-    line(14);
-    text(`Within de minimis allowance: ${deMinimis.withinDeMinimis ? "Yes" : "No"}`, 10);
-    line(14);
+    heading(ctx, "De minimis reference check (Article 4.12)");
+    keyLine(ctx, "Non-originating value", "$" + deMinimis.nonOriginatingValue.toLocaleString("en-US"));
+    keyLine(ctx, "As % of transaction value", deMinimis.nonOriginatingPercent + "% (reference limit " + deMinimis.thresholdPercent + "%)");
+    keyLine(ctx, "Within de minimis", deMinimis.withinDeMinimis ? "Yes - see notes" : "No");
     for (const note of deMinimis.notes) {
-      text(wrap(note, 95), 8.5, font, gray);
-      line(11);
+      wrappedBody(ctx, note, 105, { size: 8.5, color: BRAND.gray });
     }
-    line(14);
+    ctx.y -= 4;
   }
 
   if (result.warnings.length > 0) {
-    text("Warnings", 11, bold);
-    line(16);
+    heading(ctx, "Warnings");
     for (const w of result.warnings) {
-      text(wrap(w, 95), 9, font, gray);
-      line(13);
+      wrappedBody(ctx, w, 105, { size: 9, color: BRAND.gray });
     }
-    line(10);
+    ctx.y -= 4;
   }
 
-  ensureSpace(30);
-  text("Full Bill of Materials", 11, bold);
-  line(18);
-  text("Description", 9, bold, ink, margin);
-  text("HS Code", 9, bold, ink, margin + 220);
-  text("Origin", 9, bold, ink, margin + 320);
-  text("Value", 9, bold, ink, margin + 380);
-  text("Originating", 9, bold, ink, margin + 450);
-  line(14);
-  page.drawLine({ start: { x: margin, y: y + 6 }, end: { x: 612 - margin, y: y + 6 }, thickness: 0.5, color: gray });
+  heading(ctx, "Bill of materials");
+  ensureSpace(ctx, 34, "OrigynLX");
+  const colDesc = MARGIN;
+  const colHs = MARGIN + 230;
+  const colOrigin = MARGIN + 328;
+  const colValue = MARGIN + 395;
+  const colStatus = MARGIN + 465;
+  ctx.page.drawText("Description", { x: colDesc, y: ctx.y, size: 8.5, font: ctx.fonts.bold, color: BRAND.ink });
+  ctx.page.drawText("HS code", { x: colHs, y: ctx.y, size: 8.5, font: ctx.fonts.bold, color: BRAND.ink });
+  ctx.page.drawText("Origin", { x: colOrigin, y: ctx.y, size: 8.5, font: ctx.fonts.bold, color: BRAND.ink });
+  ctx.page.drawText("Value", { x: colValue, y: ctx.y, size: 8.5, font: ctx.fonts.bold, color: BRAND.ink });
+  ctx.page.drawText("USMCA orig.", { x: colStatus, y: ctx.y, size: 8.5, font: ctx.fonts.bold, color: BRAND.ink });
+  ctx.y -= 6;
+  ctx.page.drawLine({ start: { x: MARGIN, y: ctx.y + 2 }, end: { x: PAGE_W - MARGIN, y: ctx.y + 2 }, thickness: 0.7, color: BRAND.gold });
+  ctx.y -= 6;
 
-  for (const item of lineItems) {
-    ensureSpace(16);
-    text((item.description || "—").slice(0, 34), 9, font, ink, margin);
-    text(item.hsCode || "—", 9, mono, ink, margin + 220);
-    text(item.countryOfOrigin || "—", 9, font, ink, margin + 320);
-    text(`$${item.value.toLocaleString()}`, 9, font, ink, margin + 380);
-    text(item.originating ? "Yes" : "No", 9, font, ink, margin + 450);
-    line(15);
-  }
+  lineItems.forEach((item: BOMLineItem, i: number) => {
+    ensureSpace(ctx, 17, "OrigynLX");
+    if (i % 2 === 1) {
+      ctx.page.drawRectangle({ x: MARGIN - 4, y: ctx.y - 4, width: PAGE_W - 2 * MARGIN + 8, height: 15, color: BRAND.rowShade });
+    }
+    ctx.page.drawText((item.description || "-").slice(0, 34), { x: colDesc, y: ctx.y, size: 8.5, font: ctx.fonts.regular, color: BRAND.ink });
+    ctx.page.drawText(item.hsCode || "-", { x: colHs, y: ctx.y, size: 8.5, font: ctx.fonts.mono, color: BRAND.ink });
+    ctx.page.drawText(item.countryOfOrigin || "-", { x: colOrigin, y: ctx.y, size: 8.5, font: ctx.fonts.regular, color: BRAND.ink });
+    ctx.page.drawText("$" + item.value.toLocaleString("en-US"), { x: colValue, y: ctx.y, size: 8.5, font: ctx.fonts.regular, color: BRAND.ink });
+    ctx.page.drawText(item.originating ? "Yes" : "No", { x: colStatus, y: ctx.y, size: 8.5, font: ctx.fonts.regular, color: item.originating ? BRAND.pass : BRAND.fail });
+    ctx.y -= 15;
+  });
 
-  line(20);
-  text("This worksheet reflects the data entered at the time of generation. It is not a signed", 8.5, font, gray);
-  line(11);
-  text("Certificate of Origin and carries no legal weight on its own — keep it as your own audit trail", 8.5, font, gray);
-  line(11);
-  text("for how a qualification decision was reached.", 8.5, font, gray);
+  ctx.y -= 10;
+  wrappedBody(
+    ctx,
+    "This worksheet reflects the data entered at the time of generation. It is not a signed Certificate of Origin and carries no legal weight on its own - keep it as your own audit trail for how this qualification decision was reached.",
+    105,
+    { size: 8.5, color: BRAND.gray }
+  );
 
-  return doc.save();
-}
-
-function wrap(str: string, maxChars: number): string {
-  return str.length > maxChars ? str.slice(0, maxChars - 1) + "…" : str;
+  drawFooters(ctx);
+  return ctx.doc.save();
 }

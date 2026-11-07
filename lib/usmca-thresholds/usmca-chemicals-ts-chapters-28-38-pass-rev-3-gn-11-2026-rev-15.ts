@@ -986,4 +986,4 @@ export const CHEMICALS_PLASTICS_SECTOR_FILE: UsmcaSectorFile = {
   },
 };
 
-export default CHEMICALS_SECTOR_FILE;
+export default CHEMICALS_PLASTICS_SECTOR_FILE;

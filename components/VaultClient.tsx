@@ -16,6 +16,17 @@ interface VaultMeta {
   qualifies: boolean;
 }
 
+interface RuleWatchView {
+  id: string;
+  sku: string;
+  productName: string;
+  hsSubheading: string;
+  ruleLabel: string;
+  thresholdPercent: number | null;
+  createdAt: string;
+  pendingAlert?: { detectedAt: string; message: string };
+}
+
 interface VaultRecordView {
   id: string;
   productName: string;
@@ -39,6 +50,7 @@ export default function VaultClient() {
   const [records, setRecords] = useState<VaultMeta[] | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
+  const [watches, setWatches] = useState<RuleWatchView[] | null>(null);
 
   useEffect(() => {
     const key = getStoredLicenseKey();
@@ -64,6 +76,10 @@ export default function VaultClient() {
       .then((r) => r.json())
       .then((d) => setRecords(Array.isArray(d.records) ? d.records : []))
       .catch(() => setRecords([]));
+    fetch("/api/rule-watch/list?licenseKey=" + encodeURIComponent(key))
+      .then((r) => r.json())
+      .then((d) => setWatches(Array.isArray(d.watches) ? d.watches : []))
+      .catch(() => setWatches([]));
   }, [licensed]);
 
   async function handleRedeem() {
@@ -145,6 +161,36 @@ export default function VaultClient() {
       setMessage("Could not delete that record.");
     }
     setBusyId(null);
+  }
+
+  async function refreshWatches() {
+    const key = getStoredLicenseKey();
+    if (!key) return;
+    const res = await fetch("/api/rule-watch/list?licenseKey=" + encodeURIComponent(key));
+    const data = await res.json();
+    setWatches(Array.isArray(data.watches) ? data.watches : []);
+  }
+
+  async function handleAckWatch(id: string) {
+    const key = getStoredLicenseKey();
+    if (!key) return;
+    await fetch("/api/rule-watch/ack", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ licenseKey: key, id }),
+    });
+    await refreshWatches();
+  }
+
+  async function handleRemoveWatch(id: string) {
+    const key = getStoredLicenseKey();
+    if (!key) return;
+    await fetch("/api/rule-watch/delete", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ licenseKey: key, id }),
+    });
+    setWatches((ws) => (ws ? ws.filter((w) => w.id !== id) : ws));
   }
 
   return (
@@ -240,6 +286,46 @@ export default function VaultClient() {
               </div>
             </div>
           )}
+          <div className="rounded-card border border-white/12 bg-white/[0.03] p-5 sm:p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium text-paper">Rule-change watch</p>
+                <p className="mt-1 text-[12px] text-paper/45">Products you are monitoring. When a registry revision touches a rule your SKU relies on, the alert appears here and on the calculator until dismissed.</p>
+              </div>
+              <a href="/calculator" className="text-[13px] font-medium text-seal hover:text-seal/80 transition-colors">Watch a new product →</a>
+            </div>
+            <p className="mt-3 text-[12px] leading-relaxed text-paper/40">OrigynLX monitors its sourced, revision-tagged rule registry - not the Federal Register directly. Treat alerts as a prompt to re-verify, not legal notice.</p>
+            {watches === null ? (
+              <p className="mt-4 text-sm text-paper/50">Loading watch list...</p>
+            ) : watches.length === 0 ? (
+              <p className="mt-4 text-sm text-paper/60">Nothing on watch yet. Use Watch for rule changes on the calculator results screen.</p>
+            ) : (
+              <div className="mt-4 space-y-2">
+                {watches.map((w) => (
+                  <div key={w.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2.5">
+                    <div>
+                      <p className="text-sm text-paper">{w.sku} <span className="text-paper/40">· HS {w.hsSubheading}</span></p>
+                      <p className="text-[12px] text-paper/45">{w.ruleLabel}{w.thresholdPercent != null ? " (" + w.thresholdPercent + "%)" : ""} · watched since {new Date(w.createdAt).toLocaleDateString()}</p>
+                      {w.pendingAlert && (
+                        <p className="mt-1 text-[12px] leading-relaxed text-fail/90">{w.pendingAlert.message}</p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      {w.pendingAlert ? (
+                        <span className="rounded-full bg-fail/15 px-2.5 py-0.5 text-[11px] font-semibold text-fail">Rule changed - review</span>
+                      ) : (
+                        <span className="rounded-full bg-pass/10 px-2.5 py-0.5 text-[11px] font-medium text-pass/80">Watching</span>
+                      )}
+                      {w.pendingAlert && (
+                        <button onClick={() => handleAckWatch(w.id)} className="text-[13px] font-medium text-seal hover:text-seal/80 transition-colors">Dismiss</button>
+                      )}
+                      <button onClick={() => handleRemoveWatch(w.id)} className="text-[13px] text-paper/40 hover:text-fail transition-colors">Remove</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
         </>
       )}
     </div>

@@ -112,6 +112,11 @@ export default function CalculatorTool() {
   // P6: record vault
   const [vaultMessage, setVaultMessage] = useState<string | null>(null);
 
+  // P5: rule-change watch
+  const [watching, setWatching] = useState(false);
+  const [watchMessage, setWatchMessage] = useState<string | null>(null);
+  const [ruleAlert, setRuleAlert] = useState<{ id: string; message: string } | null>(null);
+
   const [licensed, setLicensed] = useState(false);
   const [checkingLicense, setCheckingLicense] = useState(true);
   const [licenseInput, setLicenseInput] = useState("");
@@ -159,6 +164,22 @@ export default function CalculatorTool() {
       .then((d) => setLicensed(!!d.valid))
       .finally(() => setCheckingLicense(false));
   }, []);
+
+  useEffect(() => {
+    if (!licensed) return;
+    const key = getStoredLicenseKey();
+    if (!key) return;
+    fetch("/api/rule-watch/list?licenseKey=" + encodeURIComponent(key))
+      .then((r) => r.json())
+      .then((d) => {
+        const watches = Array.isArray(d.watches) ? d.watches : [];
+        const alert = watches.find((w: { id: string; pendingAlert?: { message: string } }) => w.pendingAlert);
+        if (alert && alert.pendingAlert) {
+          setRuleAlert({ id: alert.id, message: alert.pendingAlert.message });
+        }
+      })
+      .catch(() => undefined);
+  }, [licensed]);
 
   function updateItem(id: string, patch: Partial<BOMLineItem>) {
     setLineItems((items) => items.map((it) => (it.id === id ? { ...it, ...patch } : it)));
@@ -295,6 +316,41 @@ export default function CalculatorTool() {
     }
   }
 
+  async function handleWatchProduct() {
+    const key = getStoredLicenseKey();
+    if (!key || !licensed) return;
+    setWatchMessage(null);
+    const res = await fetch("/api/rule-watch/subscribe", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({
+        licenseKey: key,
+        sku: productName || hsSubheading,
+        productName: productName || "Untitled product",
+        hsSubheading,
+        ruleId: categoryId || undefined,
+      }),
+    });
+    const data = await res.json();
+    if (res.ok) {
+      setWatching(true);
+      setWatchMessage("Watching - if a registry revision touches the rule this product relies on, the alert appears here and on the Vault page.");
+    } else {
+      setWatchMessage(data.error || "Could not add this product to the watch list.");
+    }
+  }
+
+  async function handleAckAlert() {
+    const key = getStoredLicenseKey();
+    if (!key || !ruleAlert) return;
+    await fetch("/api/rule-watch/ack", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ licenseKey: key, id: ruleAlert.id }),
+    });
+    setRuleAlert(null);
+  }
+
   function handleCsvFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -379,6 +435,19 @@ export default function CalculatorTool() {
         </div>
         <a href="/batch" className="whitespace-nowrap rounded-full border border-seal/40 px-5 py-2 text-sm font-medium text-seal hover:bg-seal/10 transition-colors">Batch qualifier →</a>
       </div>
+
+      {ruleAlert && (
+        <div className="rounded-card border border-fail/40 bg-fail/[0.06] p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-sm font-semibold text-fail">USMCA rule change detected</p>
+              <p className="mt-1 text-[13px] leading-relaxed text-paper/65">{ruleAlert.message}</p>
+              <p className="mt-1 text-[12px] text-paper/40">OrigynLX monitors its sourced, revision-tagged rule registry. Treat this as a prompt to re-verify, not legal notice.</p>
+            </div>
+            <button onClick={handleAckAlert} className="whitespace-nowrap text-[13px] text-paper/50 hover:text-paper transition-colors">Dismiss</button>
+          </div>
+        </div>
+      )}
 
       {/* Trial / license status bar */}
       <div className="rounded-card border border-white/12 bg-white/[0.03] p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -882,6 +951,15 @@ export default function CalculatorTool() {
                 Save to record vault
               </button>
             )}
+            {licensed && (
+              <button
+                onClick={handleWatchProduct}
+                disabled={watching}
+                className="rounded-full border border-white/20 px-6 py-2.5 text-sm text-paper/80 hover:border-seal/60 hover:text-paper transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {watching ? "Watching for rule changes" : "Watch for rule changes"}
+              </button>
+            )}
             {!showCert ? (
               licensed ? (
                 <button
@@ -901,6 +979,9 @@ export default function CalculatorTool() {
             ) : null}
           </div>
 
+          {watchMessage && (
+            <p className="mt-3 text-[13px] text-seal">{watchMessage}</p>
+          )}
           {vaultMessage && (
             <p className="mt-3 text-[13px] text-seal">{vaultMessage}</p>
           )}

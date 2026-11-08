@@ -8,26 +8,31 @@ import PricingCard from "@/components/PricingCard";
 import Footer from "@/components/Footer";
 
 export const metadata: Metadata = {
-  title: "USMCA Rules of Origin Qualifier and RVC Calculator | OrigynLX",
+  title: "USMCA Qualification Calculator 2026: Free RVC and Rules of Origin Tool | OrigynLX",
   description:
-    "Qualify products under USMCA in minutes: product-specific rules of origin by HS code, transaction-value and net-cost RVC, de minimis handling, batch qualification for whole catalogs, draft Certificates of Origin and broker packages. 25 free checks a month, no signup.",
+    "Check whether your product qualifies for USMCA preferential treatment with a free RVC calculator: product-specific rules of origin by HS code, transaction-value and net-cost methods, de minimis, batch catalog screening, draft Certificates of Origin and broker packages. 25 free checks a month, no signup.",
   keywords: [
+    "USMCA qualification calculator",
     "USMCA rules of origin",
-    "USMCA qualification",
+    "USMCA rules of origin 2026",
+    "free USMCA RVC calculator",
     "regional value content calculator",
-    "RVC calculator",
-    "certificate of origin USMCA",
+    "does my product qualify for USMCA",
+    "how to qualify a product for USMCA preferential treatment",
+    "USMCA certificate of origin software",
+    "how to fill out a USMCA certificate of origin",
     "USMCA compliance software",
-    "origin determination tool",
-    "customs compliance tool",
-    "Section 232 steel aluminum flags",
+    "USMCA de minimis rule",
+    "tariff shift rule",
+    "USMCA duty savings calculator",
     "T-MEC reglas de origen",
+    "verificador de origen T-MEC",
   ],
   alternates: { canonical: "/" },
   openGraph: {
-    title: "USMCA Rules of Origin Qualifier and RVC Calculator | OrigynLX",
+    title: "USMCA Qualification Calculator 2026: Free RVC and Rules of Origin Tool | OrigynLX",
     description:
-      "Run your BOM against the exact USMCA rule of origin for your HS code. Draft certificates, audit worksheets, batch screening. 25 free checks a month, no signup.",
+      "Run your BOM against the exact USMCA rule of origin for your HS code and see whether your product qualifies for preferential treatment. Draft certificates, audit worksheets, batch screening. 25 free checks a month, no signup.",
     url: "https://origynlx.vercel.app",
     siteName: "OrigynLX",
     type: "website",
@@ -201,7 +206,7 @@ const appSchema = {
   applicationCategory: "BusinessApplication",
   operatingSystem: "Web browser",
   description:
-    "USMCA rules-of-origin qualification tool: Regional Value Content calculator, batch catalog screening, draft Certificates of Origin, audit worksheets, and broker packages.",
+    "USMCA rules-of-origin qualification tool: Regional Value Content calculator, batch catalog screening, draft Certificates of Origin, audit worksheets, and broker packages. Free tier: 25 checks a month, no signup.",
   offers: [
       { "@type": "Offer", name: "Monthly pass", price: "19", priceCurrency: "USD" },
       { "@type": "Offer", name: "Annual license", price: "149", priceCurrency: "USD" },
@@ -311,7 +316,11 @@ export default function Page() {
                 USMCA questions, answered.
               </h2>
               <p className="mt-5 text-[15px] leading-relaxed text-paper/55">
-                Straight answers on rules, methods, documents, data, and pricing. Anything missing?{" "}
+                Straight answers on rules, methods, documents, data, and pricing. For the full walk-through, read the guide on{" "}
+                <Link href="/guides/how-to-qualify-a-product-for-usmca" className="text-seal underline underline-offset-4 hover:text-seal/80 transition-colors">
+                  how to qualify a product for USMCA preferential treatment
+                </Link>
+                . Anything missing?{" "}
                 <Link href="/contact" className="text-seal underline underline-offset-4 hover:text-seal/80 transition-colors">
                   Contact us
                 </Link>

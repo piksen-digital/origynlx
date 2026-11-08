@@ -175,6 +175,17 @@ export async function getLicenseByPesepayReference(
   return getLicenseByReference(merchantReference);
 }
 
+/**
+ * Fallback lookup for the PayPal capture path: the sandbox signup flow can
+ * return a completed capture without echoing purchase_units custom_id, so
+ * resolve the license through the order-id index written at checkout start.
+ */
+export async function getLicenseByPaypalOrderId(paypalOrderId: string): Promise<LicenseRecord | null> {
+  const merchantReference = await kv.get<string>("paypalorder:" + paypalOrderId);
+  if (!merchantReference) return null;
+  return getLicenseByReference(merchantReference);
+}
+
 export async function getLicenseByKey(licenseKey: string): Promise<LicenseRecord | null> {
   const merchantReference = await kv.get<string>(`licensekey:${licenseKey}`);
   if (!merchantReference) return null;

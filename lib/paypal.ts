@@ -94,6 +94,14 @@ export async function capturePayPalOrder(orderId: string): Promise<{
   );
   if (!res.ok) {
     const text = await res.text().catch(() => "");
+    if (res.status === 422 && /ORDER_ALREADY_CAPTURED/.test(text)) {
+      const details = await getPayPalOrderDetails(orderId);
+      return {
+        status: "ALREADY_CAPTURED",
+        merchantReference: details.custom_id,
+        payerEmail: details.payerEmail,
+      };
+    }
     throw new Error("PayPal capture failed (" + res.status + "): " + text);
   }
   const data: {
@@ -104,4 +112,45 @@ export async function capturePayPalOrder(orderId: string): Promise<{
   const ref = data?.purchase_units?.[0]?.custom_id ?? null;
   const payerEmail = data?.payer?.email_address;
   return { status: data.status || "", merchantReference: ref, payerEmail };
+}
+
+/**
+ * GET /v2/checkout/orders/{id} - used to recover the merchant reference when
+ * the capture response does not echo purchase_units custom_id, and when the
+ * order was already captured (a client retry of a capture that failed
+ * server-side after PayPal confirmed the payment).
+ */
+export async function getPayPalOrderDetails(orderId: string): Promise<{
+  id: string;
+  status: string;
+  custom_id: string | null;
+  payerEmail?: string;
+}> {
+  const token = await getPayPalAccessToken();
+  const res = await fetch(
+    API_BASE() + "/v2/checkout/orders/" + encodeURIComponent(orderId),
+    {
+      method: "GET",
+      headers: {
+        authorization: "Bearer " + token,
+        "content-type": "application/json",
+      },
+    }
+  );
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error("PayPal order lookup failed (" + res.status + "): " + text);
+  }
+  const data: {
+    id?: string;
+    status?: string;
+    purchase_units?: { custom_id?: string }[];
+    payer?: { email_address?: string };
+  } = await res.json();
+  return {
+    id: data.id || orderId,
+    status: data.status || "",
+    custom_id: data?.purchase_units?.[0]?.custom_id ?? null,
+    payerEmail: data?.payer?.email_address,
+  };
 }

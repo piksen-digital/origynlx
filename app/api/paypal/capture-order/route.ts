@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { activateLicense, markLicenseFailed, sendLicenseEmail } from "@/lib/license";
+import {
+  activateLicense,
+  getLicenseByPaypalOrderId,
+  markLicenseFailed,
+  sendLicenseEmail,
+} from "@/lib/license";
 import { capturePayPalOrder } from "@/lib/paypal";
 
 export async function POST(req: NextRequest) {
@@ -10,13 +15,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Missing orderId." }, { status: 400 });
     }
     const capture = await capturePayPalOrder(orderId);
-    if (capture.status !== "COMPLETED") {
+    const alreadyCaptured = capture.status === "ALREADY_CAPTURED";
+    if (capture.status !== "COMPLETED" && !alreadyCaptured) {
       if (capture.merchantReference) {
         await markLicenseFailed(capture.merchantReference);
       }
       return NextResponse.json({ status: "failed" });
     }
-    const ref = capture.merchantReference;
+    let ref = capture.merchantReference;
+    if (!ref) {
+      const byOrder = await getLicenseByPaypalOrderId(orderId);
+      ref = byOrder ? byOrder.merchantReference : null;
+    }
     if (!ref) {
       return NextResponse.json(
         { error: "Order is missing its OrigynLX reference - please contact support with your PayPal receipt." },

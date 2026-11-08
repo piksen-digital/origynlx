@@ -1,41 +1,41 @@
 const steps = [
   {
     n: "01",
-    title: "Enter your bill of materials",
-    body: "List each component with its HS code, country of origin, and value. Mark which inputs are originating and which aren't.",
+    title: "Build your bill of materials",
+    body: "Type components by hand or import the CSV template: HS codes, values, origin status, everything the rule needs. Fill it in Excel or Google Sheets, upload it, done.",
   },
   {
     n: "02",
-    title: "We run the Regional Value Content math",
-    body: "Transaction value minus non-originating material value, divided by transaction value — calculated in your browser, nothing leaves your machine.",
+    title: "The engine picks your rule",
+    body: "OrigynLX looks up the product-specific rule of origin for your HS code and shows which method and threshold apply: transaction value, net cost, or de minimis, with the standard 60% test as fallback and every threshold sourced.",
   },
   {
     n: "03",
-    title: "See your margin against the threshold",
-    body: "Get a clear pass or fail against the 60% (or your product's) threshold, plus how much room you have before a sourcing change would flip the result.",
+    title: "Get a verdict with receipts",
+    body: "A clear pass or fail against the threshold, with the margin to spare, Section 232 steel and aluminum flags, and a needs-review marker whenever the data does not support a clean answer. No silent guesses.",
   },
   {
     n: "04",
-    title: "Generate a draft certificate",
-    body: "The nine CBP-required data elements, pre-filled from your BOM. Review it, then sign it yourself — the certifying party is always you.",
+    title: "Export and file",
+    body: "Draft Certificate of Origin, audit worksheet, and broker package PDFs for one product, or a color-coded Excel matrix for your entire catalog. Review, sign, and ship.",
   },
 ];
 
 export default function ProcessSteps() {
   return (
-    <section className="relative border-t border-white/12 bg-ink py-20 md:py-28 lg:py-32">
+    <section id="how-it-works" className="relative border-t border-white/12 bg-ink py-20 md:py-28 lg:py-32">
       <div className="mx-auto max-w-content px-5 sm:px-6 lg:px-12">
         <div className="mb-14 lg:grid lg:grid-cols-12 lg:gap-8">
           <div className="lg:col-span-7">
             <span className="text-xs font-medium uppercase tracking-[0.08em] text-paper/50">How it works</span>
             <h2 className="mt-6 text-balance font-display text-[10vw] font-semibold leading-[0.95] tracking-tight text-paper sm:text-5xl md:text-6xl">
-              Four steps, no ambiguity.
+              From BOM to broker-ready in four steps.
             </h2>
           </div>
           <div className="mt-6 lg:col-span-5 lg:mt-2 lg:self-end">
             <p className="max-w-md text-pretty text-base leading-relaxed text-paper/60 sm:text-lg">
-              Same math a customs broker runs by hand — just faster, and you can run it as often
-              as your sourcing changes.
+              The same math a broker runs by hand, at catalog scale, with sourced rules and honest
+              flags instead of black-box answers.
             </p>
           </div>
         </div>

@@ -8,6 +8,7 @@ import {
 } from "./rvc-calculator";
 import { THRESHOLD_PICKER_OPTIONS, type ThresholdPickerReference } from "./usmca-rule-picker";
 import { flagTradeRemedies } from "./trade-remedy-flags";
+import { downloadTextCsv } from "./csv-download";
 
 /**
  * Batch CSV qualification (P3).
@@ -289,14 +290,7 @@ export const BATCH_TEMPLATE_CSV = [
 ].join("\n");
 
 export function downloadBatchTemplate(): void {
-  if (typeof document === "undefined") return;
-  const blob = new Blob([BATCH_TEMPLATE_CSV], { type: "text/csv" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "origynlx-batch-template.csv";
-  a.click();
-  URL.revokeObjectURL(url);
+  downloadTextCsv("origynlx-batch-template.csv", BATCH_TEMPLATE_CSV);
 }
 
 function csvField(s: string): string {

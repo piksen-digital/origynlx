@@ -1,5 +1,6 @@
 import Papa from "papaparse";
 import type { BOMLineItem } from "./rvc-calculator";
+import { downloadTextCsv } from "./csv-download";
 
 export interface CsvImportResult {
   items: BOMLineItem[];
@@ -125,11 +126,5 @@ export function bomTemplateCsv(): string {
 }
 
 export function downloadBomTemplate(): void {
-  const blob = new Blob([bomTemplateCsv()], { type: "text/csv;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "origynlx-usmca-bom-template.csv";
-  a.click();
-  URL.revokeObjectURL(url);
+  downloadTextCsv("origynlx-usmca-bom-template.csv", bomTemplateCsv());
 }

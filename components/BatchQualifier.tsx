@@ -9,6 +9,7 @@ import {
   type BatchRowResult,
 } from "@/lib/batch-qualify";
 import { getStoredLicenseKey, storeLicenseKey, tryRestoreLicense } from "@/lib/trial";
+import { downloadTextCsv } from "@/lib/csv-download";
 
 export default function BatchQualifier() {
   const [licensed, setLicensed] = useState(false);
@@ -94,14 +95,7 @@ export default function BatchQualifier() {
       return;
     }
     setDownloadMessage(null);
-    const csv = resultsCsv(rows);
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "origynlx-batch-results.csv";
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadTextCsv("origynlx-batch-results.csv", resultsCsv(rows));
   }
 
   const counts = { qualifies: 0, fails: 0, review: 0 };

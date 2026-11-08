@@ -4,9 +4,8 @@ import {
   generateMerchantReference,
   attachPaypalOrderId,
 } from "@/lib/license";
+import { resolvePlan } from "@/lib/plans";
 import { createPayPalOrder, paypalConfigured } from "@/lib/paypal";
-
-const PRICE_USD = Number(process.env.LICENSE_PRICE_USD || 149);
 
 export async function POST(req: NextRequest) {
   try {
@@ -21,14 +20,20 @@ export async function POST(req: NextRequest) {
     if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return NextResponse.json({ error: "A valid email is required." }, { status: 400 });
     }
+    const plan = resolvePlan(body?.plan);
     const merchantReference = generateMerchantReference();
     await createPendingLicense({
       merchantReference,
-      amount: PRICE_USD,
+      amount: plan.priceUsd,
       currencyCode: "USD",
       email,
+      termDays: plan.termDays,
     });
-    const order = await createPayPalOrder({ amount: PRICE_USD, merchantReference });
+    const order = await createPayPalOrder({
+      amount: plan.priceUsd,
+      merchantReference,
+      description: plan.reasonForPayment,
+    });
     await attachPaypalOrderId(merchantReference, order.orderId);
     return NextResponse.json({ orderId: order.orderId, merchantReference });
   } catch (err: any) {

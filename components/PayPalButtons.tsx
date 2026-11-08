@@ -26,6 +26,7 @@ export interface PayPalButtonsProps {
   email: string;
   emailValid: boolean;
   mode: string;
+  plan: string;
   onSuccess: (licenseKey: string) => void;
   onError: (message: string) => void;
 }
@@ -34,11 +35,13 @@ export default function PayPalButtons(props: PayPalButtonsProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const renderedRef = useRef(false);
   const emailRef = useRef(props.email);
+  const planRef = useRef(props.plan);
   const onSuccessRef = useRef(props.onSuccess);
   const onErrorRef = useRef(props.onError);
   const [loadFailed, setLoadFailed] = useState(false);
 
   emailRef.current = props.email;
+  planRef.current = props.plan;
   onSuccessRef.current = props.onSuccess;
   onErrorRef.current = props.onError;
 
@@ -59,7 +62,7 @@ export default function PayPalButtons(props: PayPalButtonsProps) {
             const res = await fetch("/api/paypal/create-order", {
               method: "POST",
               headers: { "content-type": "application/json" },
-              body: JSON.stringify({ email: emailRef.current }),
+              body: JSON.stringify({ email: emailRef.current, plan: planRef.current }),
             });
             const data: { orderId?: string; error?: string } = await res.json().catch(() => ({}));
             if (!res.ok || !data.orderId) {

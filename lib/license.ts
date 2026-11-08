@@ -30,6 +30,7 @@ export interface LicenseRecord {
   activatedAt?: string;
   expiresAt?: string;
   renewalReminderSentAt?: string;
+  termDays?: number;
 }
 
 const keyFor = (merchantReference: string) => `license:${merchantReference}`;
@@ -40,6 +41,7 @@ export async function createPendingLicense(record: {
   amount: number;
   currencyCode: string;
   email?: string;
+  termDays?: number;
 }): Promise<void> {
   const value: LicenseRecord = {
     merchantReference: record.merchantReference,
@@ -47,6 +49,7 @@ export async function createPendingLicense(record: {
     amount: record.amount,
     currencyCode: record.currencyCode,
     email: record.email,
+    termDays: record.termDays,
     createdAt: new Date().toISOString(),
   };
   await kv.set(keyFor(record.merchantReference), value);
@@ -118,7 +121,8 @@ export async function activateLicense(
   const licenseKey = generateLicenseKey();
   const now = new Date();
   const expires = new Date(now);
-  expires.setDate(expires.getDate() + LICENSE_TERM_DAYS);
+  const termDays = existing.termDays ?? LICENSE_TERM_DAYS;
+  expires.setDate(expires.getDate() + termDays);
 
   const value: LicenseRecord = {
     merchantReference,
@@ -129,6 +133,7 @@ export async function activateLicense(
     pesepayReferenceNumber,
     pesepayPollUrl: existing.pesepayPollUrl,
     licenseKey,
+    termDays,
     createdAt: existing.createdAt ?? now.toISOString(),
     activatedAt: now.toISOString(),
     expiresAt: expires.toISOString(),

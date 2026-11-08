@@ -1,6 +1,14 @@
+import type { Metadata } from "next";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import PricingCard from "@/components/PricingCard";
+
+export const metadata: Metadata = {
+  title: "Pricing: USMCA Qualification Plans, Monthly and Annual | OrigynLX",
+  description:
+    "OrigynLX pricing: 25 free USMCA checks every month, a 19 USD monthly pass, or a 149 USD annual license. Unlimited RVC checks, certificates, batch qualification, vault, and rule watch.",
+  alternates: { canonical: "/pricing" },
+};
 
 export default function PricingPage() {
   return (
@@ -11,11 +19,12 @@ export default function PricingPage() {
           <div className="max-w-2xl">
             <span className="text-xs font-medium uppercase tracking-[0.08em] text-paper/50">Pricing</span>
             <h1 className="mt-4 font-display text-4xl font-semibold leading-tight text-paper sm:text-5xl">
-              One license, one product line.
+              One product line, two ways to pay.
             </h1>
             <p className="mt-4 text-base leading-relaxed text-paper/60 sm:text-lg">
-              Twenty-five free checks every month to see if this is useful. After that, one annual license unlocks
-              unlimited RVC calculations and certificate downloads for that product line.
+              Twenty-five free checks every month to see if this is useful. After that, pay 19 USD
+              for a 30-day pass or 149 USD for a full year; both unlock unlimited RVC calculations,
+              certificates, batch qualification, and every other feature for that product line.
             </p>
           </div>
 

@@ -55,7 +55,7 @@ async function sendReminder(resend: Resend, record: LicenseRecord) {
     to: record.email!,
     subject: `Your OrigynLX license expires in ${daysLeft} days`,
     text:
-      `Your OrigynLX annual license (${record.licenseKey}) expires on ${new Date(record.expiresAt!).toLocaleDateString()}.\n\n` +
+      `Your OrigynLX license (${record.licenseKey}) expires on ${new Date(record.expiresAt!).toLocaleDateString()}.\n\n` +
       `USMCA sourcing rules can shift year to year, so re-checking on renewal is worth doing anyway, not just a formality.\n\n` +
       `Renew at ${process.env.NEXT_PUBLIC_SITE_URL}/pricing to keep unlimited checks and certificate downloads.`,
   });

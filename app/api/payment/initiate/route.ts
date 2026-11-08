@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { initiatePesepayTransaction } from "@/lib/pesepay";
 import { createPendingLicense, generateMerchantReference, attachPesepayTracking } from "@/lib/license";
-
-const PRICE_USD = Number(process.env.LICENSE_PRICE_USD || 149);
+import { resolvePlan } from "@/lib/plans";
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => ({}));
+    const plan = resolvePlan(body?.plan);
     const email = typeof body?.email === "string" ? body.email.trim() : undefined;
 
     if (!email || !email.includes("@")) {
@@ -18,15 +18,16 @@ export async function POST(req: NextRequest) {
 
     await createPendingLicense({
       merchantReference,
-      amount: PRICE_USD,
+      amount: plan.priceUsd,
       currencyCode: "USD",
       email,
+      termDays: plan.termDays,
     });
 
     const result = await initiatePesepayTransaction({
-      amount: PRICE_USD,
+      amount: plan.priceUsd,
       currencyCode: "USD",
-      reasonForPayment: "OrigynLX annual license",
+      reasonForPayment: plan.reasonForPayment,
       merchantReference,
       resultUrl: `${siteUrl}/api/payment/webhook`,
       returnUrl: `${siteUrl}/payment/success?ref=${merchantReference}`,

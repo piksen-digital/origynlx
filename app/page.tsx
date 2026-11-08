@@ -49,7 +49,7 @@ const STAKES: { title: string; body: string }[] = [
   },
   {
     title: "Broker economics",
-    body: "A broker runs this math by hand, per product, per BOM, and bills for it. OrigynLX is one flat fee for twelve months of unlimited checks and unlimited certificates.",
+    body: "A broker runs this math by hand, per product, per BOM, and bills for it. OrigynLX is a flat fee: 19 USD for thirty days or 149 USD for a year, both with unlimited checks and unlimited certificates.",
   },
 ];
 
@@ -139,7 +139,11 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "How does the free tier work?",
-    a: "Twenty-five product checks every calendar month, free, with no signup and no card, and the counter resets on the first of each month. A one-year license for a flat 149 USD unlocks unlimited checks, unlimited certificates, batch qualification, Excel export, the vault, and rule watch.",
+    a: "Twenty-five product checks every calendar month, free, with no signup and no card, and the counter resets on the first of each month. A license unlocks unlimited checks, unlimited certificates, batch qualification, Excel export, the vault, and rule watch: 19 USD for 30 days or 149 USD for twelve months.",
+  },
+  {
+    q: "What is the difference between the monthly pass and the annual license?",
+    a: "Access is identical: unlimited checks, unlimited certificates, batch qualification, the vault, and rule watch. The monthly pass is 19 USD for 30 days and does not auto-renew; you buy another month whenever you need one. The annual license is 149 USD for twelve months, which works out to about 12 USD a month, the better deal if you ship year-round.",
   },
   {
     q: "Do I need to create an account?",
@@ -198,7 +202,10 @@ const appSchema = {
   operatingSystem: "Web browser",
   description:
     "USMCA rules-of-origin qualification tool: Regional Value Content calculator, batch catalog screening, draft Certificates of Origin, audit worksheets, and broker packages.",
-  offers: { "@type": "Offer", price: "149", priceCurrency: "USD" },
+  offers: [
+      { "@type": "Offer", name: "Monthly pass", price: "19", priceCurrency: "USD" },
+      { "@type": "Offer", name: "Annual license", price: "149", priceCurrency: "USD" },
+    ],
 };
 
 export default function Page() {
@@ -336,7 +343,7 @@ export default function Page() {
               One flat fee. Twelve months of certainty.
             </h2>
             <p className="mt-5 text-pretty text-base leading-relaxed text-paper/60 sm:text-lg">
-              Twenty-five product checks are free every month, no card and no signup. A one-year license for a flat
+              Twenty-five product checks are free every month, no card and no signup. After that, pay 19 USD for 30 days or 149 USD for a year; a license
               149 USD unlocks the full workflow for your entire catalog.
             </p>
           </div>
@@ -355,8 +362,8 @@ export default function Page() {
                 ))}
               </ul>
               <p className="mt-6 text-[13px] leading-relaxed text-paper/45">
-                Flat fee, no per-product charges, no seat minimums. The license works across your
-                devices and is valid for 365 days.
+                Flat fees, no per-product charges, no seat minimums, no auto-renew. A license works across your
+                devices: thirty days on the monthly pass, a full year on the annual license.
               </p>
             </div>
           </div>

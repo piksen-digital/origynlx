@@ -178,7 +178,8 @@ export default function LandingEs() {
               </h2>
               <p className="mt-4 text-base leading-relaxed text-paper/60">
                 Pruébalo gratis — veinticinco verificaciones de calificación al mes, sin tarjeta. Cuando estés
-                listo, una licencia anual cubre verificaciones y certificados ilimitados para esa
+                listo, un pase mensual de 19 USD o una licencia anual de 149 USD cubre verificaciones
+                y certificados ilimitados para esa
                 línea de producto.
               </p>
               <Link href="/calculator" className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-paper/70 hover:text-paper transition-colors">

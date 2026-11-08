@@ -2,7 +2,8 @@
  * Server-only PayPal REST helpers for the license checkout.
  *
  * Env vars: PAYPAL_CLIENT_ID, PAYPAL_CLIENT_SECRET, PAYPAL_ENV ("live" or
- * anything else for sandbox), LICENSE_PRICE_USD (default 149).
+ * anything else for sandbox). Prices and terms live in lib/plans.ts
+ * (LICENSE_PRICE_USD, default 149; LICENSE_PRICE_USD_MONTHLY, default 19).
  *
  * Flow: create-order creates a pending license record plus a PayPal order
  * carrying our merchantReference as custom_id; capture-order captures the
@@ -49,6 +50,7 @@ export async function getPayPalAccessToken(): Promise<string> {
 export async function createPayPalOrder(input: {
   amount: number;
   merchantReference: string;
+  description: string;
 }): Promise<{ orderId: string; status: string }> {
   const token = await getPayPalAccessToken();
   const res = await fetch(API_BASE() + "/v2/checkout/orders", {
@@ -63,7 +65,7 @@ export async function createPayPalOrder(input: {
         {
           amount: { currency_code: "USD", value: input.amount.toFixed(2) },
           custom_id: input.merchantReference,
-          description: "OrigynLX annual license",
+          description: input.description,
         },
       ],
     }),

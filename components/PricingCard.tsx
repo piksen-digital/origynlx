@@ -8,11 +8,19 @@ interface PaypalConfig {
   enabled: boolean;
   clientId: string | null;
   priceUsd: number;
+  monthlyPriceUsd: number;
   mode: string;
 }
 
 const COPY = {
   en: {
+    toggleMonthly: "Monthly",
+    toggleAnnual: "Annual",
+    saveBadge: "Save 35%",
+    monthlyLabel: "Monthly pass",
+    monthlyPer: "/ 30 days",
+    monthlyBlurb:
+      "Thirty days of full access: unlimited checks, unlimited certificates, batch qualification, and broker-ready review packages. Does not auto-renew; buy another month whenever you need one.",
     label: "Annual license",
     perYear: "/ year",
     blurb:
@@ -47,6 +55,13 @@ const COPY = {
       "If an active license exists for that email, a resume link is on its way. It expires in 30 minutes.",
   },
   es: {
+    toggleMonthly: "Mensual",
+    toggleAnnual: "Anual",
+    saveBadge: "Ahorra 35%",
+    monthlyLabel: "Pase mensual",
+    monthlyPer: "/ 30 días",
+    monthlyBlurb:
+      "Treinta días de acceso completo: verificaciones ilimitadas, certificados ilimitados, calificación por lotes y paquetes de revisión para agente aduanal. No se renueva automáticamente; compra otro mes cuando lo necesites.",
     label: "Licencia anual",
     perYear: "/ año",
     blurb:
@@ -85,6 +100,7 @@ const COPY = {
 export default function PricingCard({ locale = "en" }: { locale?: "en" | "es" }) {
   const t = COPY[locale];
   const [config, setConfig] = useState<PaypalConfig | null>(null);
+  const [plan, setPlan] = useState<"annual" | "monthly">("annual");
   const [email, setEmail] = useState("");
   const [payError, setPayError] = useState<string | null>(null);
   const [purchasedKey, setPurchasedKey] = useState<string | null>(null);
@@ -97,7 +113,9 @@ export default function PricingCard({ locale = "en" }: { locale?: "en" | "es" })
     fetch("/api/paypal/config")
       .then((r) => r.json())
       .then((d: PaypalConfig) => setConfig(d))
-      .catch(() => setConfig({ enabled: false, clientId: null, priceUsd: 149, mode: "live" }));
+      .catch(() =>
+      setConfig({ enabled: false, clientId: null, priceUsd: 149, monthlyPriceUsd: 19, mode: "live" })
+    );
   }, []);
 
   async function handleResume() {
@@ -124,7 +142,7 @@ export default function PricingCard({ locale = "en" }: { locale?: "en" | "es" })
   }
 
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
-  const price = config?.priceUsd ?? 149;
+  const price = plan === "monthly" ? (config?.monthlyPriceUsd ?? 19) : (config?.priceUsd ?? 149);
 
   if (purchasedKey) {
     return (
@@ -146,12 +164,40 @@ export default function PricingCard({ locale = "en" }: { locale?: "en" | "es" })
 
   return (
     <div className="rounded-card border border-white/12 bg-white/[0.03] p-8 sm:p-10">
-      <span className="text-xs font-medium uppercase tracking-[0.08em] text-paper/50">{t.label}</span>
-      <div className="mt-4 flex items-baseline gap-2">
-        <span className="font-display text-5xl font-semibold text-paper">{"$" + price}</span>
-        <span className="text-paper/50">{t.perYear}</span>
+      <div className="inline-flex rounded-full border border-white/15 bg-white/[0.02] p-1">
+        <button
+          onClick={() => setPlan("monthly")}
+          className={
+            plan === "monthly"
+              ? "rounded-full bg-seal px-4 py-1.5 text-[13px] font-semibold text-ink transition-colors"
+              : "rounded-full px-4 py-1.5 text-[13px] font-medium text-paper/60 hover:text-paper transition-colors"
+          }
+        >
+          {t.toggleMonthly}
+        </button>
+        <button
+          onClick={() => setPlan("annual")}
+          className={
+            plan === "annual"
+              ? "rounded-full bg-seal px-4 py-1.5 text-[13px] font-semibold text-ink transition-colors"
+              : "rounded-full px-4 py-1.5 text-[13px] font-medium text-paper/60 hover:text-paper transition-colors"
+          }
+        >
+          {t.toggleAnnual}
+        </button>
       </div>
-      <p className="mt-3 text-[15px] leading-relaxed text-paper/60">{t.blurb}</p>
+      <div className="mt-4 flex flex-wrap items-baseline gap-2">
+        <span className="font-display text-5xl font-semibold text-paper">{"$" + price}</span>
+        <span className="text-paper/50">{plan === "monthly" ? t.monthlyPer : t.perYear}</span>
+        {plan === "annual" && (
+          <span className="rounded-full border border-seal/40 px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-seal">
+            {t.saveBadge}
+          </span>
+        )}
+      </div>
+      <p className="mt-3 text-[15px] leading-relaxed text-paper/60">
+        {plan === "monthly" ? t.monthlyBlurb : t.blurb}
+      </p>
 
       <ul className="mt-6 space-y-2.5 text-[14px] text-paper/70">
         {t.features.map((f) => (
@@ -201,6 +247,7 @@ export default function PricingCard({ locale = "en" }: { locale?: "en" | "es" })
                   email={email.trim()}
                   emailValid={emailValid}
                   mode={config.mode}
+                  plan={plan}
                   onSuccess={(key: string) => {
                     storeLicenseKey(key);
                     setPurchasedKey(key);

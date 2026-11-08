@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
   });
 
   const bytes: Uint8Array = buildXlsx(spec);
-  return new NextResponse(bytes, {
+  return new NextResponse(bytes as unknown as BodyInit, {
     status: 200,
     headers: {
       "content-type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",

@@ -20,6 +20,7 @@ export default function BatchQualifier() {
   const [parseMessages, setParseMessages] = useState<string[]>([]);
   const [downloadMessage, setDownloadMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -91,11 +92,58 @@ export default function BatchQualifier() {
   function handleDownloadResults() {
     if (!rows) return;
     if (!licensed) {
-      setDownloadMessage("CSV export is a licensed feature. Enter your license key above, or get one from the pricing page.");
+      setDownloadMessage("Results export is a licensed feature. Enter your license key above, or get one from the pricing page.");
       return;
     }
     setDownloadMessage(null);
     downloadTextCsv("origynlx-batch-results.csv", resultsCsv(rows));
+  }
+
+  async function handleDownloadXlsx() {
+    if (!rows) return;
+    if (!licensed) {
+      setDownloadMessage("Results export is a licensed feature. Enter your license key above, or get one from the pricing page.");
+      return;
+    }
+    const key = getStoredLicenseKey();
+    if (!key) {
+      setDownloadMessage("License key missing from this browser. Re-enter your key above and try again.");
+      return;
+    }
+    setDownloadMessage(null);
+    setExporting(true);
+    try {
+      const res = await fetch("/api/batch/export-xlsx", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ licenseKey: key, rows }),
+      });
+      if (!res.ok) {
+        let data: { error?: string } = {};
+        try {
+          data = await res.json();
+        } catch {
+          // response was not JSON; keep the generic message
+        }
+        setDownloadMessage(data.error || "Export failed. Try again.");
+        return;
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = "origynlx-batch-results.xlsx";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.setTimeout((): void => {
+        URL.revokeObjectURL(url);
+      }, 2000);
+    } catch {
+      setDownloadMessage("Export failed. Check your connection and try again.");
+    } finally {
+      setExporting(false);
+    }
   }
 
   const counts = { qualifies: 0, fails: 0, review: 0 };
@@ -114,8 +162,8 @@ export default function BatchQualifier() {
           {checkingLicense
             ? "Checking license..."
             : licensed
-            ? "License active - results CSV export unlocked."
-            : "Matrix view is free. Results CSV export is a licensed feature."}
+            ? "License active - results export unlocked."
+            : "Matrix view is free. Results export (Excel or CSV) is a licensed feature."}
         </p>
         {!licensed && (
           <div className="flex items-center gap-3">
@@ -162,14 +210,19 @@ export default function BatchQualifier() {
         <div className="rounded-card border border-white/12 bg-white/[0.03] p-5 sm:p-6">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="flex flex-wrap gap-2 text-[13px]">
-              <span className="rounded-full bg-pass/15 px-3 py-1 font-medium text-pass">{"Qualifies: " + counts.qualifies}</span>
-              <span className="rounded-full bg-fail/15 px-3 py-1 font-medium text-fail">{"Fails: " + counts.fails}</span>
-              <span className="rounded-full bg-seal/15 px-3 py-1 font-medium text-seal">{"Needs review: " + counts.review}</span>
+              <span className="rounded-full bg-pass/20 px-3 py-1 font-semibold text-pass ring-1 ring-inset ring-pass/40">{"Qualifies: " + counts.qualifies}</span>
+              <span className="rounded-full bg-fail/20 px-3 py-1 font-semibold text-fail ring-1 ring-inset ring-fail/40">{"Fails: " + counts.fails}</span>
+              <span className="rounded-full bg-seal/20 px-3 py-1 font-semibold text-seal ring-1 ring-inset ring-seal/40">{"Needs review: " + counts.review}</span>
               <span className="rounded-full border border-white/10 px-3 py-1 text-paper/50">{"SKUs: " + rows.length}</span>
             </div>
-            <button onClick={handleDownloadResults} className="rounded-full border border-white/20 px-5 py-2 text-sm text-paper/80 hover:border-seal/60 hover:text-paper transition-colors">
-              Download results CSV
-            </button>
+            <div className="flex items-center gap-4">
+              <button onClick={handleDownloadXlsx} disabled={exporting} className="rounded-full bg-seal px-5 py-2 text-sm font-semibold text-ink hover:bg-seal/90 transition-colors disabled:opacity-50">
+                {exporting ? "Exporting..." : "Download results (Excel)"}
+              </button>
+              <button onClick={handleDownloadResults} className="text-[13px] font-medium text-paper/60 hover:text-paper transition-colors">
+                Download CSV
+              </button>
+            </div>
           </div>
           {downloadMessage && <p className="mt-3 text-[13px] text-seal">{downloadMessage}</p>}
           <div className="mt-5 overflow-x-auto">
@@ -194,10 +247,10 @@ export default function BatchQualifier() {
                     <td className="py-2.5 pr-4 text-paper/70">{r.hsSubheading || "-"}</td>
                     <td className="py-2.5 pr-4 text-paper/70">{r.method === "net-cost" ? "Net cost" : "Trans. value"}</td>
                     <td className="py-2.5 pr-4 text-paper/70">{r.thresholdPercent + "% (" + r.thresholdSource + ")"}</td>
-                    <td className="py-2.5 pr-4 font-semibold text-paper">{r.rvcPercent + "%"}</td>
+                    <td className={"py-2.5 pr-4 font-semibold " + (r.status === "qualifies" ? "text-pass" : r.status === "fails" ? "text-fail" : "text-seal")}>{r.rvcPercent + "%"}</td>
                     <td className="py-2.5 pr-4 text-paper/70">{(r.marginPercent > 0 ? "+" : "") + r.marginPercent}</td>
                     <td className="py-2.5 pr-4">
-                      <span className={r.status === "qualifies" ? "font-medium text-pass" : r.status === "fails" ? "font-medium text-fail" : "font-medium text-seal"}>
+                      <span className={r.status === "qualifies" ? "inline-flex items-center rounded-full bg-pass/25 px-3 py-1 font-semibold text-pass ring-1 ring-inset ring-pass/40" : r.status === "fails" ? "inline-flex items-center rounded-full bg-fail/25 px-3 py-1 font-semibold text-fail ring-1 ring-inset ring-fail/40" : "inline-flex items-center rounded-full bg-seal/25 px-3 py-1 font-semibold text-seal ring-1 ring-inset ring-seal/40"}>
                         {r.status === "qualifies" ? "Qualifies" : r.status === "fails" ? "Fails" : "Needs review"}
                       </span>
                       {r.reviewReason && <p className="mt-1 max-w-md text-[12px] leading-relaxed text-paper/40">{r.reviewReason}</p>}

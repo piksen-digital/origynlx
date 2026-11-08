@@ -27,9 +27,29 @@ export interface PayPalButtonsProps {
   emailValid: boolean;
   mode: string;
   plan: string;
+  locale?: "en" | "es";
   onSuccess: (licenseKey: string) => void;
   onError: (message: string) => void;
 }
+
+const COPY = {
+  en: {
+    couldNotStart: "Could not start checkout.",
+    notConfirmed: "Payment could not be confirmed. If you were charged, contact support.",
+    reportedError: "PayPal reported an error. Please try again.",
+    couldNotStartRefresh: "PayPal checkout could not start. Refresh the page and try again.",
+    buttonsFailed: "PayPal buttons failed to load. Refresh the page and try again.",
+    loadFailed: "PayPal could not be loaded. Check your connection and try again.",
+  },
+  es: {
+    couldNotStart: "No se pudo iniciar el pago.",
+    notConfirmed: "No se pudo confirmar el pago. Si te cobraron, escribenos a soporte.",
+    reportedError: "PayPal reporto un error. Intenta de nuevo.",
+    couldNotStartRefresh: "El pago con PayPal no pudo iniciar. Recarga la pagina e intenta de nuevo.",
+    buttonsFailed: "Los botones de PayPal no cargaron. Recarga la pagina e intenta de nuevo.",
+    loadFailed: "PayPal no pudo cargarse. Revisa tu conexion e intenta de nuevo.",
+  },
+};
 
 export default function PayPalButtons(props: PayPalButtonsProps) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -39,6 +59,7 @@ export default function PayPalButtons(props: PayPalButtonsProps) {
   const onSuccessRef = useRef(props.onSuccess);
   const onErrorRef = useRef(props.onError);
   const [loadFailed, setLoadFailed] = useState(false);
+  const t = COPY[props.locale ?? "en"];
 
   emailRef.current = props.email;
   planRef.current = props.plan;
@@ -66,7 +87,7 @@ export default function PayPalButtons(props: PayPalButtonsProps) {
             });
             const data: { orderId?: string; error?: string } = await res.json().catch(() => ({}));
             if (!res.ok || !data.orderId) {
-              throw new Error(data.error || "Could not start checkout.");
+              throw new Error(data.error || t.couldNotStart);
             }
             return data.orderId;
           },
@@ -82,17 +103,17 @@ export default function PayPalButtons(props: PayPalButtonsProps) {
             if (result.status === "active" && result.licenseKey) {
               onSuccessRef.current(result.licenseKey);
             } else {
-              onErrorRef.current(result.error || "Payment could not be confirmed. If you were charged, contact support.");
+              onErrorRef.current(result.error || t.notConfirmed);
             }
           },
           onError: () => {
-            onErrorRef.current("PayPal reported an error. Please try again.");
+            onErrorRef.current(t.reportedError);
           },
         });
       } catch {
         renderedRef.current = false;
         setLoadFailed(true);
-        onErrorRef.current("PayPal checkout could not start. Refresh the page and try again.");
+        onErrorRef.current(t.couldNotStartRefresh);
         return;
       }
       instance
@@ -100,7 +121,7 @@ export default function PayPalButtons(props: PayPalButtonsProps) {
         .catch(() => {
           renderedRef.current = false;
           setLoadFailed(true);
-          onErrorRef.current("PayPal buttons failed to load. Refresh the page and try again.");
+          onErrorRef.current(t.buttonsFailed);
         });
     };
 
@@ -108,7 +129,11 @@ export default function PayPalButtons(props: PayPalButtonsProps) {
     const base =
       props.mode === "live" ? "https://www.paypal.com/sdk/js" : "https://www.sandbox.paypal.com/sdk/js";
     const src =
-      base + "?client-id=" + encodeURIComponent(props.clientId) + "&currency=USD&intent=capture&components=buttons";
+      base +
+        "?client-id=" +
+        encodeURIComponent(props.clientId) +
+        "&currency=USD&intent=capture&components=buttons&locale=" +
+        (props.locale === "es" ? "es_MX" : "en_US");
     const existing = document.getElementById(scriptId);
     if (existing instanceof HTMLScriptElement && existing.dataset.src === src) {
       if (window.paypal) {
@@ -126,7 +151,7 @@ export default function PayPalButtons(props: PayPalButtonsProps) {
       script.onload = init;
       script.onerror = () => {
         setLoadFailed(true);
-        onErrorRef.current("PayPal could not be loaded. Check your connection and try again.");
+        onErrorRef.current(t.loadFailed);
       };
       document.body.appendChild(script);
     } else {
@@ -138,7 +163,7 @@ export default function PayPalButtons(props: PayPalButtonsProps) {
       script.onload = init;
       script.onerror = () => {
         setLoadFailed(true);
-        onErrorRef.current("PayPal could not be loaded. Check your connection and try again.");
+        onErrorRef.current(t.loadFailed);
       };
       document.body.appendChild(script);
     }
@@ -146,11 +171,11 @@ export default function PayPalButtons(props: PayPalButtonsProps) {
     return () => {
       cancelled = true;
     };
-  }, [props.clientId, props.emailValid, props.mode]);
+  }, [props.clientId, props.emailValid, props.mode, props.locale]);
 
   if (loadFailed) {
     return (
-      <p className="mt-4 text-[13px] text-fail">PayPal could not be loaded. Check your connection and try again.</p>
+      <p className="mt-4 text-[13px] text-fail">{t.loadFailed}</p>
     );
   }
 

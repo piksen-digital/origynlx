@@ -227,7 +227,7 @@ export default function PricingCard({ locale = "en" }: { locale?: "en" | "es" })
             <p className="text-[14px] font-medium text-paper/75">{t.invoiceTitle}</p>
             <p className="mt-1 text-[13px] leading-relaxed text-paper/55">{t.invoiceBody}</p>
             <a
-              href="/contact"
+              href={locale === "es" ? "/es/contact" : "/contact"}
               className="mt-3 inline-flex rounded-full border border-seal/40 px-5 py-2 text-sm font-medium text-seal hover:bg-seal/10 transition-colors"
             >
               {t.invoiceCta}
@@ -248,6 +248,7 @@ export default function PricingCard({ locale = "en" }: { locale?: "en" | "es" })
                   emailValid={emailValid}
                   mode={config.mode}
                   plan={plan}
+                  locale={locale}
                   onSuccess={(key: string) => {
                     storeLicenseKey(key);
                     setPurchasedKey(key);

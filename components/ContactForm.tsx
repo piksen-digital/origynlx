@@ -2,7 +2,39 @@
 
 import { useState } from "react";
 
-export default function ContactForm() {
+const COPY = {
+  en: {
+    sentTitle: "Message sent.",
+    sentBody: "We will get back to you within a business day.",
+    nameLabel: "Name",
+    emailLabel: "Email",
+    messageLabel: "Message",
+    namePlaceholder: "Jane Smith",
+    emailPlaceholder: "jane@company.com",
+    messagePlaceholder: "What are you trying to qualify?",
+    sending: "Sending...",
+    submit: "Send message",
+    errorFallback: "Something went wrong.",
+    errorRetry: "Something went wrong. Please try again.",
+  },
+  es: {
+    sentTitle: "Mensaje enviado.",
+    sentBody: "Te responderemos en un dia habil.",
+    nameLabel: "Nombre",
+    emailLabel: "Correo",
+    messageLabel: "Mensaje",
+    namePlaceholder: "Ana Garcia",
+    emailPlaceholder: "ana@empresa.com",
+    messagePlaceholder: "Que producto quieres calificar?",
+    sending: "Enviando...",
+    submit: "Enviar mensaje",
+    errorFallback: "Algo salio mal.",
+    errorRetry: "Algo salio mal. Intentalo de nuevo.",
+  },
+};
+
+export default function ContactForm({ locale = "en" }: { locale?: "en" | "es" }) {
+  const t = COPY[locale];
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", email: "", message: "" });
@@ -18,19 +50,19 @@ export default function ContactForm() {
         body: JSON.stringify(form),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data?.error || "Something went wrong.");
+      if (!res.ok) throw new Error(data?.error || t.errorFallback);
       setStatus("sent");
     } catch (err: any) {
       setStatus("error");
-      setError(err.message || "Something went wrong. Please try again.");
+      setError(err.message || t.errorRetry);
     }
   }
 
   if (status === "sent") {
     return (
       <div className="rounded-card border border-white/12 bg-white/[0.03] p-10 text-center">
-        <p className="font-display text-2xl text-paper">Message sent.</p>
-        <p className="mt-3 text-paper/60">We'll get back to you within a business day.</p>
+        <p className="font-display text-2xl text-paper">{t.sentTitle}</p>
+        <p className="mt-3 text-paper/60">{t.sentBody}</p>
       </div>
     );
   }
@@ -38,18 +70,18 @@ export default function ContactForm() {
   return (
     <form onSubmit={handleSubmit} className="rounded-card border border-white/12 bg-white/[0.03] p-8 sm:p-10 space-y-5">
       <div>
-        <label htmlFor="name" className="text-[13px] font-medium text-paper/60">Name</label>
+        <label htmlFor="name" className="text-[13px] font-medium text-paper/60">{t.nameLabel}</label>
         <input
           id="name"
           required
           value={form.name}
           onChange={(e) => setForm({ ...form, name: e.target.value })}
           className="mt-2 w-full rounded-lg border border-white/15 bg-white/[0.03] px-4 py-2.5 text-paper placeholder:text-paper/30 outline-none focus:border-seal/60"
-          placeholder="Jane Smith"
+          placeholder={t.namePlaceholder}
         />
       </div>
       <div>
-        <label htmlFor="email" className="text-[13px] font-medium text-paper/60">Email</label>
+        <label htmlFor="email" className="text-[13px] font-medium text-paper/60">{t.emailLabel}</label>
         <input
           id="email"
           type="email"
@@ -57,11 +89,11 @@ export default function ContactForm() {
           value={form.email}
           onChange={(e) => setForm({ ...form, email: e.target.value })}
           className="mt-2 w-full rounded-lg border border-white/15 bg-white/[0.03] px-4 py-2.5 text-paper placeholder:text-paper/30 outline-none focus:border-seal/60"
-          placeholder="jane@company.com"
+          placeholder={t.emailPlaceholder}
         />
       </div>
       <div>
-        <label htmlFor="message" className="text-[13px] font-medium text-paper/60">Message</label>
+        <label htmlFor="message" className="text-[13px] font-medium text-paper/60">{t.messageLabel}</label>
         <textarea
           id="message"
           required
@@ -69,7 +101,7 @@ export default function ContactForm() {
           value={form.message}
           onChange={(e) => setForm({ ...form, message: e.target.value })}
           className="mt-2 w-full rounded-lg border border-white/15 bg-white/[0.03] px-4 py-2.5 text-paper placeholder:text-paper/30 outline-none focus:border-seal/60 resize-none"
-          placeholder="What are you trying to qualify?"
+          placeholder={t.messagePlaceholder}
         />
       </div>
 
@@ -80,7 +112,7 @@ export default function ContactForm() {
         disabled={status === "sending"}
         className="w-full rounded-full bg-seal text-ink text-sm font-semibold h-12 hover:bg-seal/90 transition-colors disabled:opacity-60"
       >
-        {status === "sending" ? "Sending…" : "Send message"}
+        {status === "sending" ? t.sending : t.submit}
       </button>
     </form>
   );

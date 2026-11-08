@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: "Pricing: USMCA Qualification Plans, Monthly and Annual | OrigynLX",
   description:
     "OrigynLX pricing: 25 free USMCA checks every month, a 19 USD monthly pass, or a 149 USD annual license. Unlimited RVC checks, certificates, batch qualification, vault, and rule watch.",
-  alternates: { canonical: "/pricing" },
+  alternates: { canonical: "/pricing", languages: { "en": "/pricing", "es": "/es/pricing" } },
 };
 
 export default function PricingPage() {

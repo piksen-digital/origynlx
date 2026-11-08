@@ -43,11 +43,11 @@ const COPY = {
   },
   es: {
     couldNotStart: "No se pudo iniciar el pago.",
-    notConfirmed: "No se pudo confirmar el pago. Si te cobraron, escribenos a soporte.",
-    reportedError: "PayPal reporto un error. Intenta de nuevo.",
-    couldNotStartRefresh: "El pago con PayPal no pudo iniciar. Recarga la pagina e intenta de nuevo.",
-    buttonsFailed: "Los botones de PayPal no cargaron. Recarga la pagina e intenta de nuevo.",
-    loadFailed: "PayPal no pudo cargarse. Revisa tu conexion e intenta de nuevo.",
+    notConfirmed: "No se pudo confirmar el pago. Si te cobraron, escríbenos a soporte.",
+    reportedError: "PayPal reportó un error. Inténtalo de nuevo.",
+    couldNotStartRefresh: "El pago con PayPal no pudo iniciar. Recarga la página e intenta de nuevo.",
+    buttonsFailed: "Los botones de PayPal no cargaron. Recarga la página e intenta de nuevo.",
+    loadFailed: "PayPal no pudo cargarse. Revisa tu conexión e intenta de nuevo.",
   },
 };
 

@@ -30,7 +30,7 @@ const COPY = {
     terms: "Términos",
     rights: "Todos los derechos reservados.",
     infoOnly: "Solo para uso informativo. No es asesoría legal.",
-    hrefs: { calculator: "/calculator", pricing: "/pricing", guides: "/guides/how-to-qualify-a-product-for-usmca", contact: "/contact", disclaimer: "/legal/disclaimer", terms: "/legal/terms" },
+    hrefs: { calculator: "/calculator", pricing: "/es/pricing", guides: "/es/guides/como-calificar-un-producto-para-el-usmca", contact: "/es/contact", disclaimer: "/legal/disclaimer", terms: "/legal/terms" },
   },
 };
 

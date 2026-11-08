@@ -7,7 +7,7 @@ export const metadata: Metadata = {
   title: "How to Qualify a Product for USMCA Preferential Treatment (2026 Guide) | OrigynLX",
   description:
     "Step-by-step USMCA qualification: classify the HS code, find the product-specific rule of origin, calculate Regional Value Content with a worked example, apply the de minimis rule, and certify with the nine required data elements.",
-  alternates: { canonical: "/guides/how-to-qualify-a-product-for-usmca" },
+  alternates: { canonical: "/guides/how-to-qualify-a-product-for-usmca", languages: { "en": "/guides/how-to-qualify-a-product-for-usmca", "es": "/es/guides/como-calificar-un-producto-para-el-usmca" } },
   openGraph: {
     title: "How to Qualify a Product for USMCA Preferential Treatment (2026 Guide) | OrigynLX",
     description:

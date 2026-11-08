@@ -1,8 +1,14 @@
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import RefundEstimator from "@/components/RefundEstimator";
+import type { Metadata } from "next";
 
-export const metadata = { title: "IEEPA refund estimator - OrigynLX" };
+export const metadata: Metadata = {
+  title: "IEEPA Refund Estimator: Check Refundable Tariffs Paid in 2025-2026 | OrigynLX",
+  description:
+    "The Supreme Court struck down the IEEPA tariff layers in February 2026. If you imported under the fentanyl or reciprocal tariffs during 2025 and early 2026, you may be owed a refund. Size the exposure in two minutes.",
+  alternates: { canonical: "/refund", languages: { "en": "/refund", "es": "/es/refund" } },
+};
 
 export default function RefundPage() {
   return (

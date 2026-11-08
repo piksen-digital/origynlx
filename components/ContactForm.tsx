@@ -19,17 +19,17 @@ const COPY = {
   },
   es: {
     sentTitle: "Mensaje enviado.",
-    sentBody: "Te responderemos en un dia habil.",
+    sentBody: "Te responderemos en un día hábil.",
     nameLabel: "Nombre",
     emailLabel: "Correo",
     messageLabel: "Mensaje",
-    namePlaceholder: "Ana Garcia",
+    namePlaceholder: "Ana García",
     emailPlaceholder: "ana@empresa.com",
-    messagePlaceholder: "Que producto quieres calificar?",
+    messagePlaceholder: "¿Qué producto quieres calificar?",
     sending: "Enviando...",
     submit: "Enviar mensaje",
-    errorFallback: "Algo salio mal.",
-    errorRetry: "Algo salio mal. Intentalo de nuevo.",
+    errorFallback: "Algo salió mal.",
+    errorRetry: "Algo salió mal. Inténtalo de nuevo.",
   },
 };
 

@@ -1,9 +1,33 @@
+import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import PricingCard from "@/components/PricingCard";
 import GridOverlay from "@/components/GridOverlay";
+
+export const metadata: Metadata = {
+  title: "Verificador de origen T-MEC y calculadora de RVC | OrigynLX",
+  description:
+    "Verifica si tu producto califica para el tratamiento preferencial del T-MEC con una calculadora de RVC gratis: reglas de origen específicas por código HS, métodos de valor de transacción y costo neto, minimis, revisión de catálogos por lotes y certificados de origen en borrador. 25 verificaciones gratis al mes, sin registro.",
+  keywords: [
+    "verificador de origen T-MEC",
+    "reglas de origen T-MEC",
+    "calculadora RVC",
+    "calculadora de contenido de valor regional",
+    "cómo calificar un producto para el T-MEC",
+    "certificado de origen T-MEC",
+    "cómo llenar certificado de origen T-MEC",
+    "tratamiento preferencial T-MEC",
+    "USMCA reglas de origen",
+  ],
+  alternates: { canonical: "/es", languages: { "en": "/", "es": "/es", "x-default": "/" } },
+  openGraph: {
+    title: "Verificador de origen T-MEC y calculadora de RVC | OrigynLX",
+    description:
+      "Evalúa tu lista de materiales contra la regla de origen exacta del T-MEC para tu código HS. Certificados en borrador, hojas de auditoría, revisión por lotes. 25 verificaciones gratis al mes, sin registro.",
+  },
+};
 
 const steps = [
   {
@@ -71,7 +95,7 @@ export default function LandingEs() {
                 Evalúa tu producto — 25 gratis
               </Link>
               <Link
-                href="/pricing"
+                href="/es/pricing"
                 className="inline-flex items-center justify-center rounded-full border border-paper/20 text-paper text-sm font-medium px-8 h-12 hover:border-paper/40 hover:bg-white/[0.04] transition-colors"
               >
                 Ver precios

@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     "T-MEC reglas de origen",
     "verificador de origen T-MEC",
   ],
-  alternates: { canonical: "/" },
+  alternates: { canonical: "/", languages: { "en": "/", "es": "/es", "x-default": "/" } },
   openGraph: {
     title: "USMCA Qualification Calculator 2026: Free RVC and Rules of Origin Tool | OrigynLX",
     description:

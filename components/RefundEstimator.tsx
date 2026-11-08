@@ -42,13 +42,13 @@ const CATEGORIES: Record<"en" | "es", CategoryInfo[]> = {
   es: [
     {
       id: "fentanyl",
-      label: "Derechos IEEPA relacionados con fentanilo (China, Mexico, Canada)",
+      label: "Derechos IEEPA relacionados con fentanilo (China, México, Canadá)",
       window: "pagados entre el 4 de febrero de 2025 y el 24 de febrero de 2026",
       deadline: "4 de febrero de 2027 (para entradas liquidadas definitivamente)",
     },
     {
       id: "reciprocal",
-      label: "Derechos IEEPA reciprocos",
+      label: "Derechos IEEPA recíprocos",
       window: "pagados entre el 5 de abril de 2025 y el 24 de febrero de 2026",
       deadline: "5 de abril de 2027 (para entradas liquidadas definitivamente)",
     },
@@ -56,7 +56,7 @@ const CATEGORIES: Record<"en" | "es", CategoryInfo[]> = {
       id: "other",
       label: "Otras capas IEEPA (Venezuela, Brasil, Rusia)",
       window: "pagados entre 2025 y el 24 de febrero de 2026",
-      deadline: "confirma la fecha de liquidacion por entrada",
+      deadline: "confirma la fecha de liquidación por entrada",
     },
   ],
 };
@@ -112,10 +112,10 @@ const COPY = {
     talkCta: "Talk to us →",
   },
   es: {
-    whatHappened: "Que paso, en un parrafo",
+    whatHappened: "Qué pasó, en un párrafo",
     whatHappenedBody:
-      "El 20 de febrero de 2026 la Corte Suprema derogao las capas arancelarias IEEPA en Learning Resources v. Trump. Bajo ellas se recaudaron aproximadamente 165 mil millones de dolares. CBP abrio los reembolsos a traves de su sistema CAPE por fases (20 de abril, 29 de junio y 6 de octubre de 2026), y para la fase de junio ya se habian aceptado para procesamiento unos 104 mil millones de dolares en entradas. Los aranceles sectoriales (Seccion 232 de acero y aluminio, Seccion 301) no se vieron afectados y siguen vigentes. Datos verificados a noviembre de 2026.",
-    estimateTitle: "Estima tu exposicion reembolsable",
+      "El 20 de febrero de 2026 la Corte Suprema derogó las capas arancelarias IEEPA en Learning Resources v. Trump. Bajo ellas se recaudaron aproximadamente 165 mil millones de dólares. CBP abrió los reembolsos a través de su sistema CAPE por fases (20 de abril, 29 de junio y 6 de octubre de 2026), y para la fase de junio ya se habían aceptado para procesamiento unos 104 mil millones de dólares en entradas. Los aranceles sectoriales (Sección 232 de acero y aluminio, Sección 301) no se vieron afectados y siguen vigentes. Datos verificados a noviembre de 2026.",
+    estimateTitle: "Estima tu exposición reembolsable",
     estimateHint:
       "Ingresa lo que pagaste por cada capa IEEPA: montos exactos de derechos si los tienes, o el valor y la tasa sobre los que pagaste.",
     switchToValueRate: "Cambiar a valor + tasa",
@@ -128,21 +128,21 @@ const COPY = {
     phAmount: "p. ej. 48000",
     phValue: "p. ej. 1200000",
     phRate: "p. ej. 10",
-    exposureTitle: "Exposicion reembolsable estimada",
-    deadlineWord: "Fecha limite: ",
-    note: "Las entradas no liquidadas se procesan automaticamente a traves de CAPE. Las entradas liquidadas definitivamente requieren una protesta; aplican las fechas limite por categoria indicadas arriba. CBP exige inscripcion en ACH para pagar los reembolsos; si no estas inscrito en ACH, hazlo antes de que aprueben tu reembolso.",
-    notCoveredTitle: "Lo que esta estimacion no cubre",
+    exposureTitle: "Exposición reembolsable estimada",
+    deadlineWord: "Fecha límite: ",
+    note: "Las entradas no liquidadas se procesan automáticamente a través de CAPE. Las entradas liquidadas definitivamente requieren una protesta; aplican las fechas límite por categoría indicadas arriba. CBP exige inscripción en ACH para pagar los reembolsos; si no estás inscrito en ACH, hazlo antes de que aprueben tu reembolso.",
+    notCoveredTitle: "Lo que esta estimación no cubre",
     notCovered: [
-      "Los aranceles de la Seccion 232 de acero y aluminio (50%) no se vieron afectados por la sentencia y no son reembolsables mediante este proceso.",
-      "Los aranceles de la Seccion 301 y las ordenes de AD/CVD tambien siguen vigentes: no los incluyas arriba.",
-      "Los aranceles de la Seccion 338 (50% sobre ciertos bienes canadienses, desde agosto de 2026) son un regimen aparte y no forman parte de los reembolsos IEEPA.",
-      "El tratamiento de intereses sobre los reembolsos sigue sin resolverse; considera cualquier interes como excluido de esta estimacion.",
-      "Esto es una estimacion para planeacion, no asesoria legal ni una presentacion formal. Los montos por entrada, las fechas de liquidacion y las protestas son donde esta el trabajo real.",
+      "Los aranceles de la Sección 232 de acero y aluminio (50%) no se vieron afectados por la sentencia y no son reembolsables mediante este proceso.",
+      "Los aranceles de la Sección 301 y las órdenes de AD/CVD también siguen vigentes: no los incluyas arriba.",
+      "Los aranceles de la Sección 338 (50% sobre ciertos bienes canadienses, desde agosto de 2026) son un régimen aparte y no forman parte de los reembolsos IEEPA.",
+      "El tratamiento de intereses sobre los reembolsos sigue sin resolverse; considera cualquier interés como excluido de esta estimación.",
+      "Esto es una estimación para planeación, no asesoría legal ni una presentación formal. Los montos por entrada, las fechas de liquidación y las protestas son donde está el trabajo real.",
     ],
-    helpTitle: "Quieres ayuda para dimensionar o armar un reclamo de reembolso?",
+    helpTitle: "¿Quieres ayuda para dimensionar o armar un reclamo de reembolso?",
     helpBody:
-      "OrigynLX puede ayudarte a organizar los datos de derechos por entrada para una revision de recuperacion, o referirte con un agente aduanal licenciado que presenta protestas.",
-    talkCta: "Escribenos →",
+      "OrigynLX puede ayudarte a organizar los datos de derechos por entrada para una revisión de recuperación, o referirte con un agente aduanal licenciado que presenta protestas.",
+    talkCta: "Escríbenos →",
   },
 };
 
@@ -184,7 +184,7 @@ export default function RefundEstimator({ locale = "en" }: { locale?: "en" | "es
         <p className="mt-1 text-[12px] text-paper/45">{T.estimateHint}</p>
 
         <div className="mt-5 space-y-5">
-          {CATEGORIES.map((c, i) => (
+          {categories.map((c, i) => (
             <div key={c.id} className="rounded-lg border border-white/10 bg-white/[0.02] p-4">
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="text-[13px] font-medium text-paper/85">{c.label}</p>

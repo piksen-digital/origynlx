@@ -23,15 +23,15 @@ const COPY = {
   es: {
     links: [
       { href: "/calculator", label: "Calculadora" },
-      { href: "/pricing", label: "Precios" },
+      { href: "/es/pricing", label: "Precios" },
       { href: "/batch", label: "Lote" },
       { href: "/vault", label: "Bóveda" },
-      { href: "/refund", label: "Reembolsos" },
-      { href: "/contact", label: "Contacto" },
+      { href: "/es/refund", label: "Reembolsos" },
+      { href: "/es/contact", label: "Contacto" },
     ],
     ctaDefault: { label: "Prueba gratis", href: "/calculator" },
     ctaOpen: { label: "Abrir calculadora", href: "/calculator" },
-    ctaUpgrade: { label: "Mejorar plan", href: "/pricing" },
+    ctaUpgrade: { label: "Mejorar plan", href: "/es/pricing" },
     langSwitch: { label: "EN", href: "/" },
   },
 };

@@ -123,7 +123,7 @@ export default function CalculatorTool() {
   const [checkingLicense, setCheckingLicense] = useState(true);
   const [licenseInput, setLicenseInput] = useState("");
   const [licenseError, setLicenseError] = useState<string | null>(null);
-  const [remaining, setRemaining] = useState(5);
+  const [remaining, setRemaining] = useState(FREE_CHECKS);
 
   const [showCert, setShowCert] = useState(false);
   const [certInfo, setCertInfo] = useState<CertifierInfo>({
@@ -468,7 +468,7 @@ export default function CalculatorTool() {
         ) : licensed ? (
           <p className="text-sm text-pass">License active — unlimited checks and certificates.</p>
         ) : (
-          <p className="text-sm text-paper/70">{remaining} of {FREE_CHECKS} free checks remaining this browser.</p>
+          <p className="text-sm text-paper/70">{remaining} of {FREE_CHECKS} free checks remaining this month.</p>
         )}
         {!licensed && (
           <div className="flex items-center gap-3">
@@ -718,7 +718,7 @@ export default function CalculatorTool() {
         </div>
 
         <button onClick={handleCalculate} disabled={blocked} className="w-full rounded-full bg-seal text-ink text-sm font-semibold h-12 hover:bg-seal/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">Calculate RVC</button>
-        {blocked && <div className="text-center space-y-3"><p className="text-[13px] text-paper/60">You've used your {FREE_CHECKS} free checks.</p><a href="/pricing" className="inline-flex items-center justify-center gap-2 text-[13px] font-medium text-seal hover:text-seal/80 transition-colors">Unlock unlimited checks <span>→</span></a></div>}
+        {blocked && <div className="text-center space-y-3"><p className="text-[13px] text-paper/60">You've used your {FREE_CHECKS} free checks for this month. They reset on the first of next month.</p><a href="/pricing" className="inline-flex items-center justify-center gap-2 text-[13px] font-medium text-seal hover:text-seal/80 transition-colors">Unlock unlimited checks <span>→</span></a></div>}
       </div>
 
       {/* Results */}

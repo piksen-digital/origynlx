@@ -3,7 +3,7 @@ import Link from "next/link";
 import GridOverlay from "./GridOverlay";
 
 const STATS: { value: string; label: string }[] = [
-  { value: "25", label: "free checks, no card, no signup" },
+  { value: "25", label: "free checks every month, no card" },
   { value: "60%", label: "standard RVC threshold, sourced by rule" },
   { value: "5,000", label: "rows per batch export" },
 ];

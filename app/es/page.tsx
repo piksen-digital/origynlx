@@ -177,7 +177,7 @@ export default function LandingEs() {
                 Un solo número. Sin sorpresas por medición.
               </h2>
               <p className="mt-4 text-base leading-relaxed text-paper/60">
-                Pruébalo gratis — veinticinco verificaciones de calificación, sin tarjeta. Cuando estés
+                Pruébalo gratis — veinticinco verificaciones de calificación al mes, sin tarjeta. Cuando estés
                 listo, una licencia anual cubre verificaciones y certificados ilimitados para esa
                 línea de producto.
               </p>

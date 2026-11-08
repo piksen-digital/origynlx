@@ -2,17 +2,33 @@
 
 const TRIAL_KEY = "olx_trial_checks_used";
 const LICENSE_KEY = "olx_license_key";
+
+/**
+ * Free tier: FREE_CHECKS product checks per calendar month (UTC).
+ * The counter lives in localStorage as "<used>|<YYYY-MM>" and resets
+ * automatically on the first day of each month. Legacy one-time
+ * counters (a plain number) are treated as the current month.
+ */
 export const FREE_CHECKS = 25;
+
+function currentMonthKey(): string {
+  return new Date().toISOString().slice(0, 7);
+}
 
 export function getChecksUsed(): number {
   if (typeof window === "undefined") return 0;
   const raw = window.localStorage.getItem(TRIAL_KEY);
-  return raw ? parseInt(raw, 10) || 0 : 0;
+  if (!raw) return 0;
+  const sep = raw.indexOf("|");
+  if (sep === -1) return parseInt(raw, 10) || 0;
+  if (raw.slice(sep + 1) !== currentMonthKey()) return 0;
+  return parseInt(raw.slice(0, sep), 10) || 0;
 }
 
 export function recordCheckUsed(): number {
+  if (typeof window === "undefined") return 0;
   const next = getChecksUsed() + 1;
-  window.localStorage.setItem(TRIAL_KEY, String(next));
+  window.localStorage.setItem(TRIAL_KEY, next + "|" + currentMonthKey());
   return next;
 }
 

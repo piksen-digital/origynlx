@@ -39,6 +39,12 @@ const COPY = {
     invoiceBody:
       "Contact us for direct deposit or a PayPal invoice and we will set up your license manually.",
     invoiceCta: "Contact us",
+    resumeTitle: "Already paid?",
+    resumeBody:
+      "Enter the email you used at checkout and we will send a one-time resume link. No password, no account.",
+    resumeCta: "Send resume link",
+    resumeSent:
+      "If an active license exists for that email, a resume link is on its way. It expires in 30 minutes.",
   },
   es: {
     label: "Licencia anual",
@@ -67,6 +73,12 @@ const COPY = {
     invoiceBody:
       "Escríbenos para depósito directo o factura PayPal y configuramos tu licencia manualmente.",
     invoiceCta: "Contáctanos",
+    resumeTitle: "¿Ya pagaste?",
+    resumeBody:
+      "Ingresa el correo que usaste al pagar y te enviaremos un enlace único para retomar tu licencia. Sin contraseña, sin cuenta.",
+    resumeCta: "Enviar enlace",
+    resumeSent:
+      "Si existe una licencia activa para ese correo, el enlace va en camino. Expira en 30 minutos.",
   },
 };
 
@@ -76,6 +88,10 @@ export default function PricingCard({ locale = "en" }: { locale?: "en" | "es" })
   const [email, setEmail] = useState("");
   const [payError, setPayError] = useState<string | null>(null);
   const [purchasedKey, setPurchasedKey] = useState<string | null>(null);
+  const [resumeEmail, setResumeEmail] = useState("");
+  const [resumeSent, setResumeSent] = useState(false);
+  const [resumeError, setResumeError] = useState<string | null>(null);
+  const [resumeBusy, setResumeBusy] = useState(false);
 
   useEffect(() => {
     fetch("/api/paypal/config")
@@ -83,6 +99,29 @@ export default function PricingCard({ locale = "en" }: { locale?: "en" | "es" })
       .then((d: PaypalConfig) => setConfig(d))
       .catch(() => setConfig({ enabled: false, clientId: null, priceUsd: 149, mode: "live" }));
   }, []);
+
+  async function handleResume() {
+    setResumeError(null);
+    setResumeSent(false);
+    setResumeBusy(true);
+    try {
+      const res = await fetch("/api/license/resume", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email: resumeEmail.trim() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        setResumeSent(true);
+      } else {
+        setResumeError(data.error || "Could not send a resume link.");
+      }
+    } catch {
+      setResumeError("Could not send a resume link. Check your connection.");
+    } finally {
+      setResumeBusy(false);
+    }
+  }
 
   const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
   const price = config?.priceUsd ?? 149;
@@ -173,6 +212,32 @@ export default function PricingCard({ locale = "en" }: { locale?: "en" | "es" })
             <p className="mt-3 text-[12px] leading-relaxed text-paper/40">{t.paypalNote}</p>
           </div>
         )}
+      </div>
+
+      <div className="mt-8 rounded-lg border border-white/10 bg-white/[0.02] p-4">
+        <p className="text-[14px] font-medium text-paper/75">{t.resumeTitle}</p>
+        <p className="mt-1 text-[13px] leading-relaxed text-paper/55">{t.resumeBody}</p>
+        {resumeSent ? (
+          <p className="mt-3 text-[13px] text-seal">{t.resumeSent}</p>
+        ) : (
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+            <input
+              type="email"
+              value={resumeEmail}
+              onChange={(e) => setResumeEmail(e.target.value)}
+              placeholder={t.emailPlaceholder}
+              className="w-full rounded-lg border border-white/15 bg-white/[0.03] px-4 py-2 text-sm text-paper placeholder:text-paper/30 outline-none focus:border-seal/60"
+            />
+            <button
+              onClick={handleResume}
+              disabled={resumeBusy || !resumeEmail.trim()}
+              className="whitespace-nowrap rounded-full border border-seal/40 px-5 py-2 text-sm font-medium text-seal hover:bg-seal/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {resumeBusy ? "Sending..." : t.resumeCta}
+            </button>
+          </div>
+        )}
+        {resumeError && <p className="mt-2 text-[13px] text-fail">{resumeError}</p>}
       </div>
     </div>
   );

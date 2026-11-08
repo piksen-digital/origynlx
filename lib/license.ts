@@ -137,6 +137,9 @@ export async function activateLicense(
   await kv.set(keyFor(merchantReference), value);
   await kv.set(`licensekey:${licenseKey}`, merchantReference);
   await kv.set(refIndexKey(pesepayReferenceNumber), merchantReference);
+  if (value.email) {
+    await kv.set("licenseemail:" + value.email.trim().toLowerCase(), merchantReference);
+  }
 
   return { record: value, justActivated: true };
 }
@@ -240,4 +243,116 @@ function generateLicenseKey(): string {
 
 export function generateMerchantReference(): string {
   return `olx_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+}
+
+/* ---------------------------------------------------------------
+ * No-signup license restore (P-lite).
+ *
+ * Two persistence paths, both keyed by opaque tokens in Redis so the
+ * browser never carries the license key itself in a cookie:
+ *
+ * 1. Same device: an httpOnly cookie (olx_rid) minted at redeem time
+ *    survives localStorage clears; GET /api/license/restore silently
+ *    re-attaches the key.
+ * 2. New device: POST /api/license/resume emails a one-time link
+ *    (30 min TTL) that mints the same cookie on whatever browser
+ *    clicks it. No passwords, no accounts, no email enumeration.
+ * ------------------------------------------------------------- */
+
+export const RESUME_COOKIE_NAME = "olx_rid";
+const RESUME_COOKIE_TTL_SECONDS = 60 * 60 * 24 * 400; // ~13 months
+const RESUME_LINK_TTL_SECONDS = 60 * 30; // 30 minutes
+
+interface ResumeTokenRecord {
+  merchantReference: string;
+  email?: string;
+  createdAt: string;
+}
+
+function randomToken(prefix: string): string {
+  return (
+    prefix +
+    "_" +
+    Date.now().toString(36) +
+    Math.random().toString(36).slice(2, 12) +
+    Math.random().toString(36).slice(2, 12)
+  );
+}
+
+export function resumeCookieOptions(): {
+  httpOnly: true;
+  secure: true;
+  sameSite: "lax";
+  maxAge: number;
+  path: string;
+} {
+  return {
+    httpOnly: true,
+    secure: true,
+    sameSite: "lax",
+    maxAge: RESUME_COOKIE_TTL_SECONDS,
+    path: "/",
+  };
+}
+
+function isUsableLicense(license: LicenseRecord | null): license is LicenseRecord {
+  if (!license || license.status !== "active" || !license.licenseKey) return false;
+  if (!license.expiresAt || new Date(license.expiresAt).getTime() <= Date.now()) return false;
+  return true;
+}
+
+export async function createResumeCookieToken(merchantReference: string, email?: string): Promise<string> {
+  const token = randomToken("rc");
+  const record: ResumeTokenRecord = { merchantReference, email, createdAt: new Date().toISOString() };
+  await kv.set("resumecookie:" + token, record);
+  return token;
+}
+
+export async function getLicenseByResumeCookieToken(token: string): Promise<LicenseRecord | null> {
+  const record = await kv.get<ResumeTokenRecord>("resumecookie:" + token);
+  if (!record) return null;
+  const license = await getLicenseByReference(record.merchantReference);
+  return isUsableLicense(license) ? license : null;
+}
+
+export async function createResumeLinkToken(merchantReference: string, email?: string): Promise<string> {
+  const token = randomToken("rl");
+  const record: ResumeTokenRecord = { merchantReference, email, createdAt: new Date().toISOString() };
+  await kv.set("resumelink:" + token, record, { ex: RESUME_LINK_TTL_SECONDS });
+  return token;
+}
+
+export async function getLicenseByResumeLinkToken(token: string): Promise<LicenseRecord | null> {
+  const record = await kv.get<ResumeTokenRecord>("resumelink:" + token);
+  if (!record) return null;
+  const license = await getLicenseByReference(record.merchantReference);
+  return isUsableLicense(license) ? license : null;
+}
+
+/**
+ * Most recent active license for an email. Prefers the licenseemail
+ * index written at activation; falls back to a scan of active licenses
+ * for records activated before the index existed, then writes the index.
+ */
+export async function findActiveLicenseByEmail(email: string): Promise<LicenseRecord | null> {
+  const normalized = (email || "").trim().toLowerCase();
+  if (!normalized) return null;
+  const indexed = await kv.get<string>("licenseemail:" + normalized);
+  if (indexed) {
+    const direct = await getLicenseByReference(indexed);
+    if (isUsableLicense(direct)) return direct;
+  }
+  const actives = await listActiveLicenses();
+  const matches = actives.filter(
+    (r: LicenseRecord) => (r.email || "").trim().toLowerCase() === normalized
+  );
+  if (matches.length === 0) return null;
+  matches.sort((a: LicenseRecord, b: LicenseRecord) => {
+    const at = a.activatedAt || a.createdAt;
+    const bt = b.activatedAt || b.createdAt;
+    return at < bt ? 1 : at > bt ? -1 : 0;
+  });
+  const best = matches[0];
+  await kv.set("licenseemail:" + normalized, best.merchantReference);
+  return best;
 }

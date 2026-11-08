@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { generateCertificatePDF, type CertifierInfo } from "@/lib/certificate-pdf";
 import { generateAuditWorksheetPDF } from "@/lib/audit-worksheet-pdf";
-import { getStoredLicenseKey, storeLicenseKey } from "@/lib/trial";
+import { getStoredLicenseKey, storeLicenseKey, tryRestoreLicense } from "@/lib/trial";
 import type { BOMLineItem, RVCResult, DeMinimisResult } from "@/lib/rvc-calculator";
 
 interface VaultMeta {
@@ -55,7 +55,17 @@ export default function VaultClient() {
   useEffect(() => {
     const key = getStoredLicenseKey();
     if (!key) {
-      setCheckingLicense(false);
+      tryRestoreLicense().then((restored: boolean) => {
+        if (restored && !window.sessionStorage.getItem("olx_restored_reload")) {
+          // The resume cookie held a valid license (localStorage was cleared):
+          // reload once so the normal redeem path runs with the restored key.
+          // The sessionStorage flag prevents any reload loop.
+          window.sessionStorage.setItem("olx_restored_reload", "1");
+          window.location.reload();
+          return;
+        }
+        setCheckingLicense(false);
+      });
       return;
     }
     fetch("/api/license/redeem", {

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Logo from "./Logo";
-import { getStoredLicenseKey, hasFreeChecksLeft } from "@/lib/trial";
+import { getStoredLicenseKey, hasFreeChecksLeft, tryRestoreLicense } from "@/lib/trial";
 
 const COPY = {
   en: {
@@ -42,11 +42,22 @@ export default function Nav({ locale = "en" }: { locale?: "en" | "es" }) {
   const [cta, setCta] = useState(t.ctaDefault);
 
   useEffect(() => {
+    let cancelled = false;
     if (getStoredLicenseKey()) {
       setCta(t.ctaOpen);
-    } else if (!hasFreeChecksLeft()) {
-      setCta(t.ctaUpgrade);
+      return;
     }
+    tryRestoreLicense().then((restored: boolean) => {
+      if (cancelled) return;
+      if (restored) {
+        setCta(t.ctaOpen);
+      } else if (!hasFreeChecksLeft()) {
+        setCta(t.ctaUpgrade);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [locale]);
 

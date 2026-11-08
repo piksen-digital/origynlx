@@ -90,7 +90,7 @@ export function parseBatchCsv(text: string): { products: BatchProductInput[]; er
   const parsed = Papa.parse<RawBatchRow>(text, {
     header: true,
     skipEmptyLines: true,
-    transformHeader: (h: string) => h.trim().toLowerCase(),
+    transformHeader: (h: string) => h.trim().toLowerCase().replace(/[\s-]+/g, "_"),
   });
   const rows = (parsed.data || []).filter((r: RawBatchRow) => r && typeof r === "object");
   if (rows.length === 0) {
@@ -100,7 +100,10 @@ export function parseBatchCsv(text: string): { products: BatchProductInput[]; er
   const has = (h: string) => Object.prototype.hasOwnProperty.call(rows[0], h);
   const missing = ["sku", "transaction_value", "component", "component_value"].filter((h) => !has(h));
   if (missing.length > 0) {
-    errors.push("Missing required column(s): " + missing.join(", ") + " - download the template for the exact format.");
+    const detected: string = ((parsed.meta && parsed.meta.fields) || []).join(", ").slice(0, 200);
+    errors.push(
+      "Missing required column(s): " + missing.join(", ") + " - download the template for the exact format. Detected columns: " + detected
+    );
     return { products: [], errors };
   }
 

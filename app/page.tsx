@@ -353,7 +353,7 @@ export default function Page() {
             </h2>
             <p className="mt-5 text-pretty text-base leading-relaxed text-paper/60 sm:text-lg">
               Twenty-five product checks are free every month, no card and no signup. After that, pay 19 USD for 30 days or 149 USD for a year; a license
-              149 USD unlocks the full workflow for your entire catalog.
+              unlocks the full workflow for your entire catalog.
             </p>
           </div>
           <div className="grid gap-8 lg:grid-cols-12 lg:items-start">

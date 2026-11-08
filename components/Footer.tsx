@@ -6,6 +6,7 @@ const COPY = {
     blurb:
       "OrigynLX provides an estimate of USMCA origin qualification for internal use. It is a pre-screening and document-preparation tool, not legal advice and not a certification service. The importer, exporter, or producer remains responsible for verifying and signing the final Certificate of Origin.",
     product: "Product",
+    guides: "Guides",
     calculator: "Calculator",
     pricing: "Pricing",
     contact: "Contact",
@@ -14,12 +15,13 @@ const COPY = {
     terms: "Terms",
     rights: "All rights reserved.",
     infoOnly: "For informational use only. Not legal advice.",
-    hrefs: { calculator: "/calculator", pricing: "/pricing", contact: "/contact", disclaimer: "/legal/disclaimer", terms: "/legal/terms" },
+    hrefs: { calculator: "/calculator", pricing: "/pricing", guides: "/guides/how-to-qualify-a-product-for-usmca", contact: "/contact", disclaimer: "/legal/disclaimer", terms: "/legal/terms" },
   },
   es: {
     blurb:
       "OrigynLX ofrece una estimación de calificación de origen bajo el T-MEC para uso interno. Es una herramienta de preselección y preparación de documentos, no asesoría legal ni un servicio de certificación. El importador, exportador o productor sigue siendo responsable de verificar y firmar el Certificado de Origen final.",
     product: "Producto",
+    guides: "Guías",
     calculator: "Calculadora",
     pricing: "Precios",
     contact: "Contacto",
@@ -28,7 +30,7 @@ const COPY = {
     terms: "Términos",
     rights: "Todos los derechos reservados.",
     infoOnly: "Solo para uso informativo. No es asesoría legal.",
-    hrefs: { calculator: "/calculator", pricing: "/pricing", contact: "/contact", disclaimer: "/legal/disclaimer", terms: "/legal/terms" },
+    hrefs: { calculator: "/calculator", pricing: "/pricing", guides: "/guides/how-to-qualify-a-product-for-usmca", contact: "/contact", disclaimer: "/legal/disclaimer", terms: "/legal/terms" },
   },
 };
 
@@ -48,6 +50,7 @@ export default function Footer({ locale = "en" }: { locale?: "en" | "es" }) {
             <ul className="mt-4 space-y-2.5">
               <li><Link href={t.hrefs.calculator} className="text-sm text-paper/70 hover:text-paper transition-colors">{t.calculator}</Link></li>
               <li><Link href={t.hrefs.pricing} className="text-sm text-paper/70 hover:text-paper transition-colors">{t.pricing}</Link></li>
+              <li><Link href={t.hrefs.guides} className="text-sm text-paper/70 hover:text-paper transition-colors">{t.guides}</Link></li>
               <li><Link href={t.hrefs.contact} className="text-sm text-paper/70 hover:text-paper transition-colors">{t.contact}</Link></li>
             </ul>
           </div>

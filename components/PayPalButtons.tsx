@@ -8,7 +8,7 @@ interface PayPalSdkButtonInstance {
 
 interface PayPalSdk {
   Buttons: (opts: {
-    style?: Record<string, string>;
+    style?: Record<string, string | number>;
     createOrder: () => Promise<string>;
     onApprove: (data: { orderID: string }) => Promise<void>;
     onError: (err: unknown) => void;
@@ -51,9 +51,10 @@ export default function PayPalButtons(props: PayPalButtonsProps) {
       const target = containerRef.current;
       if (cancelled || !sdk || !target || renderedRef.current) return;
       renderedRef.current = true;
-      sdk
-        .Buttons({
-          style: { layout: "vertical", color: "gold", shape: "pill", label: "paypal", height: "45" },
+      let instance: PayPalSdkButtonInstance;
+      try {
+        instance = sdk.Buttons({
+          style: { layout: "vertical", color: "gold", shape: "pill", label: "paypal", height: 45 },
           createOrder: async () => {
             const res = await fetch("/api/paypal/create-order", {
               method: "POST",
@@ -84,7 +85,14 @@ export default function PayPalButtons(props: PayPalButtonsProps) {
           onError: () => {
             onErrorRef.current("PayPal reported an error. Please try again.");
           },
-        })
+        });
+      } catch {
+        renderedRef.current = false;
+        setLoadFailed(true);
+        onErrorRef.current("PayPal checkout could not start. Refresh the page and try again.");
+        return;
+      }
+      instance
         .render(target)
         .catch(() => {
           renderedRef.current = false;

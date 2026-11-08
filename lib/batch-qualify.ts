@@ -182,7 +182,14 @@ export function runBatch(products: BatchProductInput[]): BatchRowResult[] {
 
 function runOne(p: BatchProductInput): BatchRowResult {
   const matches = findRulesForHS(p.hsSubheading);
-  const rule = matches.length > 0 ? matches[0] : null;
+  // One picker entry exists per (rule, method) pair, so a single rule with
+  // both transaction-value and net-cost options appears twice. Genuine
+  // ambiguity means distinct underlying rules (ruleId), not method variants.
+  const uniqueRuleIds = Array.from(new Set(matches.map((r: ThresholdPickerReference) => r.ruleId)));
+  const ruleCount = uniqueRuleIds.length;
+  // Prefer the option matching the method requested in the CSV.
+  const methodMatch = matches.find((r: ThresholdPickerReference) => r.method === p.method) || null;
+  const rule = matches.length > 0 ? (methodMatch || matches[0]) : null;
   let method: BatchMethod = p.method;
   let reviewReason: string | null = null;
 
@@ -197,6 +204,12 @@ function runOne(p: BatchProductInput): BatchRowResult {
     threshold = rule.thresholdPercent;
     method = rule.method;
     thresholdSource = "rule";
+    if (rule.method !== p.method) {
+      reviewReason =
+        "The matched USMCA rule defines the " +
+        (rule.method === "net-cost" ? "net cost" : "transaction value") +
+        " method only - RVC computed with that method instead of the one in the CSV.";
+    }
   } else {
     threshold = p.method === "net-cost" ? 50 : 60;
     thresholdSource = "default";
@@ -206,9 +219,19 @@ function runOne(p: BatchProductInput): BatchRowResult {
       "%. Confirm the governing rule before relying on this result.";
   }
 
-  if (matches.length > 1) {
+  if (ruleCount > 1 && thresholdSource === "rule") {
+    const candidateLabels = matches
+      .filter((r: ThresholdPickerReference, i: number, arr: ThresholdPickerReference[]) =>
+        arr.findIndex((x: ThresholdPickerReference) => x.ruleId === r.ruleId) === i
+      )
+      .map((r: ThresholdPickerReference) => r.label)
+      .slice(0, 3)
+      .join(" | ");
     reviewReason = (reviewReason ? reviewReason + " " : "") +
-      "Multiple USMCA rules match this HS code - verify which product-specific rule governs.";
+      "Multiple USMCA rules match this HS code - verify which product-specific rule governs, or pin the threshold in the CSV. Candidates: " +
+      candidateLabels +
+      (ruleCount > 3 ? " (+" + String(ruleCount - 3) + " more)" : "") +
+      ".";
   }
 
   if (method === "net-cost" && (p.netCost === undefined || p.netCost <= 0)) {

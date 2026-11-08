@@ -3,7 +3,7 @@ import Link from "next/link";
 import GridOverlay from "./GridOverlay";
 
 const STATS: { value: string; label: string }[] = [
-  { value: "5", label: "free checks, no card, no signup" },
+  { value: "25", label: "free checks, no card, no signup" },
   { value: "60%", label: "standard RVC threshold, sourced by rule" },
   { value: "5,000", label: "rows per batch export" },
 ];
@@ -46,7 +46,7 @@ export default function Hero() {
               href="/calculator"
               className="inline-flex items-center justify-center rounded-full bg-seal text-ink text-sm font-semibold px-8 h-12 hover:bg-seal/90 transition-colors"
             >
-              Run 5 free checks
+              Run 25 free checks
             </Link>
             <Link
               href="/batch"

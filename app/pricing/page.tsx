@@ -14,7 +14,7 @@ export default function PricingPage() {
               One license, one product line.
             </h1>
             <p className="mt-4 text-base leading-relaxed text-paper/60 sm:text-lg">
-              Five free checks to see if this is useful. After that, one annual license unlocks
+              Twenty-five free checks to see if this is useful. After that, one annual license unlocks
               unlimited RVC calculations and certificate downloads for that product line.
             </p>
           </div>

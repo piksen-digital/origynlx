@@ -2,7 +2,7 @@
 
 const TRIAL_KEY = "olx_trial_checks_used";
 const LICENSE_KEY = "olx_license_key";
-export const FREE_CHECKS = 5;
+export const FREE_CHECKS = 25;
 
 export function getChecksUsed(): number {
   if (typeof window === "undefined") return 0;

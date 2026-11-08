@@ -10,7 +10,7 @@ import Footer from "@/components/Footer";
 export const metadata: Metadata = {
   title: "USMCA Rules of Origin Qualifier and RVC Calculator | OrigynLX",
   description:
-    "Qualify products under USMCA in minutes: product-specific rules of origin by HS code, transaction-value and net-cost RVC, de minimis handling, batch qualification for whole catalogs, draft Certificates of Origin and broker packages. 5 free checks, no signup.",
+    "Qualify products under USMCA in minutes: product-specific rules of origin by HS code, transaction-value and net-cost RVC, de minimis handling, batch qualification for whole catalogs, draft Certificates of Origin and broker packages. 25 free checks, no signup.",
   keywords: [
     "USMCA rules of origin",
     "USMCA qualification",
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "USMCA Rules of Origin Qualifier and RVC Calculator | OrigynLX",
     description:
-      "Run your BOM against the exact USMCA rule of origin for your HS code. Draft certificates, audit worksheets, batch screening. 5 free checks, no signup.",
+      "Run your BOM against the exact USMCA rule of origin for your HS code. Draft certificates, audit worksheets, batch screening. 25 free checks, no signup.",
     url: "https://origynlx.vercel.app",
     siteName: "OrigynLX",
     type: "website",
@@ -139,7 +139,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "How many free checks do I get?",
-    a: "Five product checks, free, with no signup and no card. A one-year license for a flat 149 USD unlocks unlimited checks, unlimited certificates, batch qualification, Excel export, the vault, and rule watch.",
+    a: "Twenty-five product checks, free, with no signup and no card. A one-year license for a flat 149 USD unlocks unlimited checks, unlimited certificates, batch qualification, Excel export, the vault, and rule watch.",
   },
   {
     q: "Do I need to create an account?",
@@ -336,7 +336,7 @@ export default function Page() {
               One flat fee. Twelve months of certainty.
             </h2>
             <p className="mt-5 text-pretty text-base leading-relaxed text-paper/60 sm:text-lg">
-              Five product checks are free, no card and no signup. A one-year license for a flat
+              Twenty-five product checks are free, no card and no signup. A one-year license for a flat
               149 USD unlocks the full workflow for your entire catalog.
             </p>
           </div>
@@ -369,12 +369,12 @@ export default function Page() {
             Know what your BOM is worth before your next shipment.
           </h2>
           <p className="mx-auto mt-5 max-w-xl text-pretty text-base leading-relaxed text-paper/60 sm:text-lg">
-            Five checks free. No card, no account, no sales call. Upload a BOM and see a qualified
+            Twenty-five checks free. No card, no account, no sales call. Upload a BOM and see a qualified
             or failed result in minutes.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
             <Link href="/calculator" className="inline-flex items-center justify-center rounded-full bg-seal text-ink text-sm font-semibold px-8 h-12 hover:bg-seal/90 transition-colors">
-              Run 5 free checks
+              Run 25 free checks
             </Link>
             <Link href="/pricing" className="inline-flex items-center justify-center rounded-full border border-paper/20 text-paper text-sm font-medium px-8 h-12 hover:border-paper/40 hover:bg-white/[0.04] transition-colors">
               View pricing

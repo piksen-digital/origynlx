@@ -68,7 +68,7 @@ export default function LandingEs() {
                 href="/calculator"
                 className="inline-flex items-center justify-center rounded-full bg-seal text-ink text-sm font-semibold px-8 h-12 hover:bg-seal/90 transition-colors"
               >
-                Evalúa tu producto — 5 gratis
+                Evalúa tu producto — 25 gratis
               </Link>
               <Link
                 href="/pricing"
@@ -177,7 +177,7 @@ export default function LandingEs() {
                 Un solo número. Sin sorpresas por medición.
               </h2>
               <p className="mt-4 text-base leading-relaxed text-paper/60">
-                Pruébalo gratis — cinco verificaciones de calificación, sin tarjeta. Cuando estés
+                Pruébalo gratis — veinticinco verificaciones de calificación, sin tarjeta. Cuando estés
                 listo, una licencia anual cubre verificaciones y certificados ilimitados para esa
                 línea de producto.
               </p>

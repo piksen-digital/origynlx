@@ -19,7 +19,7 @@
 
 export function downloadTextCsv(filename: string, csv: string): void {
   if (typeof document === "undefined") return;
-  const crlf: string = csv.indexOf("\r\n") >= 0 ? csv : csv.split("\n").join("\r\n");
+  const crlf: string = csv.replace(/\r\n|\r|\n/g, "\r\n");
   const blob = new Blob(["\uFEFF" + crlf], { type: "text/csv;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");

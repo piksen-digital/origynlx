@@ -51,6 +51,9 @@ const COPY = {
     resumeBody:
       "Enter the email you used at checkout and we will send a one-time resume link. No password, no account.",
     resumeCta: "Send resume link",
+    resumeBusy: "Sending...",
+    resumeFail: "Could not send a resume link.",
+    resumeFailConn: "Could not send a resume link. Check your connection.",
     resumeSent:
       "If an active license exists for that email, a resume link is on its way. It expires in 30 minutes.",
   },
@@ -92,6 +95,9 @@ const COPY = {
     resumeBody:
       "Ingresa el correo que usaste al pagar y te enviaremos un enlace único para retomar tu licencia. Sin contraseña, sin cuenta.",
     resumeCta: "Enviar enlace",
+    resumeBusy: "Enviando...",
+    resumeFail: "No se pudo enviar el enlace.",
+    resumeFailConn: "No se pudo enviar el enlace. Revisa tu conexión.",
     resumeSent:
       "Si existe una licencia activa para ese correo, el enlace va en camino. Expira en 30 minutos.",
   },
@@ -132,10 +138,10 @@ export default function PricingCard({ locale = "en" }: { locale?: "en" | "es" })
       if (res.ok) {
         setResumeSent(true);
       } else {
-        setResumeError(data.error || "Could not send a resume link.");
+        setResumeError(data.error || t.resumeFail);
       }
     } catch {
-      setResumeError("Could not send a resume link. Check your connection.");
+      setResumeError(t.resumeFailConn);
     } finally {
       setResumeBusy(false);
     }
@@ -153,7 +159,7 @@ export default function PricingCard({ locale = "en" }: { locale?: "en" | "es" })
           {purchasedKey}
         </p>
         <a
-          href="/calculator"
+          href={locale === "es" ? "/es/calculator" : "/calculator"}
           className="mt-5 inline-flex rounded-full bg-seal px-6 py-2.5 text-sm font-semibold text-ink hover:bg-seal/90 transition-colors"
         >
           {t.successCta}
@@ -281,7 +287,7 @@ export default function PricingCard({ locale = "en" }: { locale?: "en" | "es" })
               disabled={resumeBusy || !resumeEmail.trim()}
               className="whitespace-nowrap rounded-full border border-seal/40 px-5 py-2 text-sm font-medium text-seal hover:bg-seal/10 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {resumeBusy ? "Sending..." : t.resumeCta}
+              {resumeBusy ? t.resumeBusy : t.resumeCta}
             </button>
           </div>
         )}

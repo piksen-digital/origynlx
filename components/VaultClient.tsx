@@ -5,6 +5,7 @@ import { generateCertificatePDF, type CertifierInfo } from "@/lib/certificate-pd
 import { generateAuditWorksheetPDF } from "@/lib/audit-worksheet-pdf";
 import { getStoredLicenseKey, storeLicenseKey, tryRestoreLicense } from "@/lib/trial";
 import type { BOMLineItem, RVCResult, DeMinimisResult } from "@/lib/rvc-calculator";
+import { tt } from "@/lib/result-i18n";
 
 interface VaultMeta {
   id: string;
@@ -42,7 +43,100 @@ function daysUntil(dateStr: string): number | null {
   return Math.ceil((t - Date.now()) / (24 * 60 * 60 * 1000));
 }
 
-export default function VaultClient() {
+const VAULT_COPY_EN = {
+  checkingLicense: "Checking license...",
+  licensed: "License active - record vault unlocked.",
+  locked: "The record vault is a licensed feature.",
+  keyPlaceholder: "Have a license key?",
+  unlock: "Unlock",
+  licenseInactive: "That license key is not active.",
+  recordsTitle: "Your qualification records",
+  recordsBlurb:
+    "Snapshots saved from the calculator: BOM, computed result, certification data. Certificates and worksheets regenerate on demand, exactly as they were.",
+  calcHref: "/calculator",
+  saveNew: "Save a new record →",
+  retentionNote:
+    "Five-year retention: USMCA Article 5-C requires certifying parties and importers to keep the records behind a certification for at least five years - the exact window CBP reaches into when it sends a verification request. Blanket-period expiry reminders go out 30 days ahead.",
+  loadingRecords: "Loading records...",
+  noRecords: "No records yet. Calculate a product and use Save to record vault on the results screen.",
+  thProduct: "Product",
+  thBlanket: "Blanket period end",
+  thSaved: "Saved",
+  thActions: "Actions",
+  endsIn: (n: number) => "Ends in " + n + " days",
+  certificate: "Certificate",
+  worksheet: "Worksheet",
+  delete: "Delete",
+  couldNotLoad: "Could not load that record.",
+  certFail: "Could not regenerate the certificate.",
+  worksheetFail: "Could not regenerate the worksheet.",
+  deleted:
+    "Record deleted. You remain responsible for retaining certification records for five years under USMCA Article 5-C.",
+  deleteFail: "Could not delete that record.",
+  watchTitle: "Rule-change watch",
+  watchBlurb:
+    "Products you are monitoring. When a registry revision touches a rule your SKU relies on, the alert appears here and on the calculator until dismissed.",
+  watchNew: "Watch a new product →",
+  watchNote:
+    "OrigynLX monitors its sourced, revision-tagged rule registry - not the Federal Register directly. Treat alerts as a prompt to re-verify, not legal notice.",
+  loadingWatch: "Loading watch list...",
+  noWatch: "Nothing on watch yet. Use Watch for rule changes on the calculator results screen.",
+  ruleChanged: "Rule changed - review",
+  watching: "Watching",
+  dismiss: "Dismiss",
+  remove: "Remove",
+  watchedSince: "watched since",
+};
+
+const VAULT_COPY_ES: typeof VAULT_COPY_EN = {
+  checkingLicense: "Verificando licencia...",
+  licensed: "Licencia activa - bóveda de registros desbloqueada.",
+  locked: "La bóveda de registros es una función con licencia.",
+  keyPlaceholder: "¿Tienes una clave de licencia?",
+  unlock: "Desbloquear",
+  licenseInactive: "Esa clave de licencia no está activa.",
+  recordsTitle: "Tus registros de calificación",
+  recordsBlurb:
+    "Copias guardadas desde la calculadora: lista de materiales, resultado calculado y datos de certificación. Los certificados y las hojas de trabajo se regeneran a demanda, exactamente como eran.",
+  calcHref: "/es/calculator",
+  saveNew: "Guardar un registro nuevo →",
+  retentionNote:
+    "Retención de cinco años: el Artículo 5-C del T-MEC exige que las partes certificadoras y los importadores conserven los registros detrás de una certificación por al menos cinco años - la ventana exacta que CBP alcanza cuando envía una solicitud de verificación. Los recordatorios de vencimiento del período general se envían 30 días antes.",
+  loadingRecords: "Cargando registros...",
+  noRecords: "Aún no hay registros. Calcula un producto y usa Guardar en la bóveda de registros en la pantalla de resultados.",
+  thProduct: "Producto",
+  thBlanket: "Fin del período general",
+  thSaved: "Guardado",
+  thActions: "Acciones",
+  endsIn: (n: number) => "Termina en " + n + " días",
+  certificate: "Certificado",
+  worksheet: "Hoja de trabajo",
+  delete: "Eliminar",
+  couldNotLoad: "No se pudo cargar ese registro.",
+  certFail: "No se pudo regenerar el certificado.",
+  worksheetFail: "No se pudo regenerar la hoja de trabajo.",
+  deleted:
+    "Registro eliminado. Sigues siendo responsable de conservar los registros de certificación por cinco años bajo el Artículo 5-C del T-MEC.",
+  deleteFail: "No se pudo eliminar ese registro.",
+  watchTitle: "Vigilancia de cambios de reglas",
+  watchBlurb:
+    "Productos que estás monitoreando. Cuando una revisión del registro toca una regla de la que depende tu SKU, la alerta aparece aquí y en la calculadora hasta que la descartes.",
+  watchNew: "Vigilar un producto nuevo →",
+  watchNote:
+    "OrigynLX monitorea su registro de reglas con fuente y etiqueta de revisión - no el Federal Register directamente. Toma las alertas como un aviso para reverificar, no como notificación legal.",
+  loadingWatch: "Cargando la lista de vigilancia...",
+  noWatch: "Aún no vigilas nada. Usa Vigilar cambios de regla en la pantalla de resultados de la calculadora.",
+  ruleChanged: "Regla cambiada - revisar",
+  watching: "Vigilando",
+  dismiss: "Descartar",
+  remove: "Quitar",
+  watchedSince: "vigilado desde",
+};
+
+const COPY: Record<"en" | "es", typeof VAULT_COPY_EN> = { en: VAULT_COPY_EN, es: VAULT_COPY_ES };
+
+export default function VaultClient({ locale = "en" }: { locale?: "en" | "es" }) {
+  const t = COPY[locale];
   const [licensed, setLicensed] = useState(false);
   const [checkingLicense, setCheckingLicense] = useState(true);
   const [licenseInput, setLicenseInput] = useState("");
@@ -101,7 +195,7 @@ export default function VaultClient() {
     });
     const data = await res.json();
     if (!data.valid) {
-      setLicenseError(data.error || "That license key is not active.");
+      setLicenseError(data.error ? tt(data.error, locale) : t.licenseInactive);
       return;
     }
     storeLicenseKey(licenseInput.trim().toUpperCase());
@@ -124,14 +218,14 @@ export default function VaultClient() {
     try {
       const record = await fetchRecord(id);
       if (!record) {
-        setMessage("Could not load that record.");
+        setMessage(t.couldNotLoad);
         setBusyId(null);
         return;
       }
       const bytes = await generateCertificatePDF(record.productName, record.lineItems, record.result, record.certInfo);
       downloadPdf(bytes, slug(record.productName) + "-certificate.pdf");
     } catch {
-      setMessage("Could not regenerate the certificate.");
+      setMessage(t.certFail);
     }
     setBusyId(null);
   }
@@ -142,14 +236,14 @@ export default function VaultClient() {
     try {
       const record = await fetchRecord(id);
       if (!record) {
-        setMessage("Could not load that record.");
+        setMessage(t.couldNotLoad);
         setBusyId(null);
         return;
       }
       const bytes = await generateAuditWorksheetPDF(record.productName, record.lineItems, record.result, record.deMinimis);
       downloadPdf(bytes, slug(record.productName) + "-worksheet.pdf");
     } catch {
-      setMessage("Could not regenerate the worksheet.");
+      setMessage(t.worksheetFail);
     }
     setBusyId(null);
   }
@@ -166,9 +260,9 @@ export default function VaultClient() {
     });
     if (res.ok) {
       setRecords((rs) => (rs ? rs.filter((r) => r.id !== id) : rs));
-      setMessage("Record deleted. You remain responsible for retaining certification records for five years under USMCA Article 5-C.");
+      setMessage(t.deleted);
     } else {
-      setMessage("Could not delete that record.");
+      setMessage(t.deleteFail);
     }
     setBusyId(null);
   }
@@ -207,18 +301,18 @@ export default function VaultClient() {
     <div className="space-y-6">
       <div className="rounded-card border border-white/12 bg-white/[0.03] p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <p className="text-sm text-paper/70">
-          {checkingLicense ? "Checking license..." : licensed ? "License active - record vault unlocked." : "The record vault is a licensed feature."}
+          {checkingLicense ? t.checkingLicense : licensed ? t.licensed : t.locked}
         </p>
         {!licensed && (
           <div className="flex items-center gap-3">
             <input
               value={licenseInput}
               onChange={(e) => setLicenseInput(e.target.value)}
-              placeholder="Have a license key?"
+              placeholder={t.keyPlaceholder}
               className="rounded-lg border border-white/15 bg-white/[0.03] px-3 py-2 text-sm text-paper placeholder:text-paper/30 outline-none focus:border-seal/60"
             />
             <button onClick={handleRedeem} className="rounded-lg border border-white/20 px-3 py-2 text-sm text-paper/80 hover:border-seal/60 hover:text-paper transition-colors">
-              Unlock
+              {t.unlock}
             </button>
           </div>
         )}
@@ -230,23 +324,23 @@ export default function VaultClient() {
           <div className="rounded-card border border-white/12 bg-white/[0.03] p-5 sm:p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-medium text-paper">Your qualification records</p>
-                <p className="mt-1 text-[12px] text-paper/45">Snapshots saved from the calculator: BOM, computed result, certification data. Certificates and worksheets regenerate on demand, exactly as they were.</p>
+                <p className="text-sm font-medium text-paper">{t.recordsTitle}</p>
+                <p className="mt-1 text-[12px] text-paper/45">{t.recordsBlurb}</p>
               </div>
-              <a href="/calculator" className="text-[13px] font-medium text-seal hover:text-seal/80 transition-colors">Save a new record →</a>
+              <a href={t.calcHref} className="text-[13px] font-medium text-seal hover:text-seal/80 transition-colors">{t.saveNew}</a>
             </div>
             <p className="mt-3 text-[12px] leading-relaxed text-paper/40">
-              Five-year retention: USMCA Article 5-C requires certifying parties and importers to keep the records behind a certification for at least five years - the exact window CBP reaches into when it sends a verification request. Blanket-period expiry reminders go out 30 days ahead.
+              {t.retentionNote}
             </p>
           </div>
 
           {message && <p className="text-[13px] text-seal">{message}</p>}
 
           {records === null ? (
-            <p className="text-sm text-paper/50">Loading records...</p>
+            <p className="text-sm text-paper/50">{t.loadingRecords}</p>
           ) : records.length === 0 ? (
             <div className="rounded-card border border-white/12 bg-white/[0.03] p-6 text-sm text-paper/60">
-              No records yet. Calculate a product and use Save to record vault on the results screen.
+              {t.noRecords}
             </div>
           ) : (
             <div className="rounded-card border border-white/12 bg-white/[0.03] p-5 sm:p-6">
@@ -254,12 +348,12 @@ export default function VaultClient() {
                 <table className="w-full text-[13px]">
                   <thead>
                     <tr className="border-b border-white/10 text-left text-paper/45">
-                      <th className="py-2 pr-4 font-medium">Product</th>
+                      <th className="py-2 pr-4 font-medium">{t.thProduct}</th>
                       <th className="py-2 pr-4 font-medium">HS</th>
                       <th className="py-2 pr-4 font-medium">RVC</th>
-                      <th className="py-2 pr-4 font-medium">Blanket period end</th>
-                      <th className="py-2 pr-4 font-medium">Saved</th>
-                      <th className="py-2 pr-4 font-medium">Actions</th>
+                      <th className="py-2 pr-4 font-medium">{t.thBlanket}</th>
+                      <th className="py-2 pr-4 font-medium">{t.thSaved}</th>
+                      <th className="py-2 pr-4 font-medium">{t.thActions}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -277,15 +371,15 @@ export default function VaultClient() {
                           <td className="py-2.5 pr-4 text-paper/70">
                             {r.blanketPeriodEnd || "-"}
                             {left !== null && left >= 0 && left <= 30 && (
-                              <span className="ml-2 rounded-full bg-seal/15 px-2 py-0.5 text-[11px] font-medium text-seal">{"Ends in " + left + " days"}</span>
+                              <span className="ml-2 rounded-full bg-seal/15 px-2 py-0.5 text-[11px] font-medium text-seal">{t.endsIn(left)}</span>
                             )}
                           </td>
                           <td className="py-2.5 pr-4 text-paper/50">{new Date(r.createdAt).toLocaleDateString()}</td>
                           <td className="py-2.5 pr-4">
                             <div className="flex flex-wrap items-center gap-3">
-                              <button onClick={() => handleCertificate(r.id)} disabled={busyId === r.id} className="text-[13px] font-medium text-seal hover:text-seal/80 transition-colors disabled:opacity-50">Certificate</button>
-                              <button onClick={() => handleWorksheet(r.id)} disabled={busyId === r.id} className="text-[13px] font-medium text-seal hover:text-seal/80 transition-colors disabled:opacity-50">Worksheet</button>
-                              <button onClick={() => handleDelete(r.id)} disabled={busyId === r.id} className="text-[13px] text-paper/40 hover:text-fail transition-colors disabled:opacity-50">Delete</button>
+                              <button onClick={() => handleCertificate(r.id)} disabled={busyId === r.id} className="text-[13px] font-medium text-seal hover:text-seal/80 transition-colors disabled:opacity-50">{t.certificate}</button>
+                              <button onClick={() => handleWorksheet(r.id)} disabled={busyId === r.id} className="text-[13px] font-medium text-seal hover:text-seal/80 transition-colors disabled:opacity-50">{t.worksheet}</button>
+                              <button onClick={() => handleDelete(r.id)} disabled={busyId === r.id} className="text-[13px] text-paper/40 hover:text-fail transition-colors disabled:opacity-50">{t.delete}</button>
                             </div>
                           </td>
                         </tr>
@@ -299,37 +393,37 @@ export default function VaultClient() {
           <div className="rounded-card border border-white/12 bg-white/[0.03] p-5 sm:p-6">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-medium text-paper">Rule-change watch</p>
-                <p className="mt-1 text-[12px] text-paper/45">Products you are monitoring. When a registry revision touches a rule your SKU relies on, the alert appears here and on the calculator until dismissed.</p>
+                <p className="text-sm font-medium text-paper">{t.watchTitle}</p>
+                <p className="mt-1 text-[12px] text-paper/45">{t.watchBlurb}</p>
               </div>
-              <a href="/calculator" className="text-[13px] font-medium text-seal hover:text-seal/80 transition-colors">Watch a new product →</a>
+              <a href={t.calcHref} className="text-[13px] font-medium text-seal hover:text-seal/80 transition-colors">{t.watchNew}</a>
             </div>
-            <p className="mt-3 text-[12px] leading-relaxed text-paper/40">OrigynLX monitors its sourced, revision-tagged rule registry - not the Federal Register directly. Treat alerts as a prompt to re-verify, not legal notice.</p>
+            <p className="mt-3 text-[12px] leading-relaxed text-paper/40">{t.watchNote}</p>
             {watches === null ? (
-              <p className="mt-4 text-sm text-paper/50">Loading watch list...</p>
+              <p className="mt-4 text-sm text-paper/50">{t.loadingWatch}</p>
             ) : watches.length === 0 ? (
-              <p className="mt-4 text-sm text-paper/60">Nothing on watch yet. Use Watch for rule changes on the calculator results screen.</p>
+              <p className="mt-4 text-sm text-paper/60">{t.noWatch}</p>
             ) : (
               <div className="mt-4 space-y-2">
                 {watches.map((w) => (
                   <div key={w.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2.5">
                     <div>
                       <p className="text-sm text-paper">{w.sku} <span className="text-paper/40">· HS {w.hsSubheading}</span></p>
-                      <p className="text-[12px] text-paper/45">{w.ruleLabel}{w.thresholdPercent != null ? " (" + w.thresholdPercent + "%)" : ""} · watched since {new Date(w.createdAt).toLocaleDateString()}</p>
+                      <p className="text-[12px] text-paper/45">{w.ruleLabel}{w.thresholdPercent != null ? " (" + w.thresholdPercent + "%)" : ""}{" · " + t.watchedSince + " "}{new Date(w.createdAt).toLocaleDateString()}</p>
                       {w.pendingAlert && (
-                        <p className="mt-1 text-[12px] leading-relaxed text-fail/90">{w.pendingAlert.message}</p>
+                        <p className="mt-1 text-[12px] leading-relaxed text-fail/90">{tt(w.pendingAlert.message, locale)}</p>
                       )}
                     </div>
                     <div className="flex items-center gap-3">
                       {w.pendingAlert ? (
-                        <span className="rounded-full bg-fail/15 px-2.5 py-0.5 text-[11px] font-semibold text-fail">Rule changed - review</span>
+                        <span className="rounded-full bg-fail/15 px-2.5 py-0.5 text-[11px] font-semibold text-fail">{t.ruleChanged}</span>
                       ) : (
-                        <span className="rounded-full bg-pass/10 px-2.5 py-0.5 text-[11px] font-medium text-pass/80">Watching</span>
+                        <span className="rounded-full bg-pass/10 px-2.5 py-0.5 text-[11px] font-medium text-pass/80">{t.watching}</span>
                       )}
                       {w.pendingAlert && (
-                        <button onClick={() => handleAckWatch(w.id)} className="text-[13px] font-medium text-seal hover:text-seal/80 transition-colors">Dismiss</button>
+                        <button onClick={() => handleAckWatch(w.id)} className="text-[13px] font-medium text-seal hover:text-seal/80 transition-colors">{t.dismiss}</button>
                       )}
-                      <button onClick={() => handleRemoveWatch(w.id)} className="text-[13px] text-paper/40 hover:text-fail transition-colors">Remove</button>
+                      <button onClick={() => handleRemoveWatch(w.id)} className="text-[13px] text-paper/40 hover:text-fail transition-colors">{t.remove}</button>
                     </div>
                   </div>
                 ))}

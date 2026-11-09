@@ -1,8 +1,17 @@
+import type { Metadata } from "next";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import VaultClient from "@/components/VaultClient";
 
-export const metadata = { title: "Record vault - OrigynLX" };
+export const metadata: Metadata = {
+  title: "USMCA Record Vault: Five-Year Certification Records | OrigynLX",
+  description:
+    "Every qualification you certify has a five-year record-keeping duty behind it. The vault keeps the BOM snapshot, the computed result and the certification data, with blanket-period expiry reminders.",
+  alternates: {
+    canonical: "/vault",
+    languages: { "en": "/vault", "es": "/es/vault" },
+  },
+};
 
 export default function VaultPage() {
   return (

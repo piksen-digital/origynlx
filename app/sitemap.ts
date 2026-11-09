@@ -21,6 +21,9 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: "/es/refund", priority: 0.6, changeFrequency: "monthly" },
     { path: "/es/contact", priority: 0.5, changeFrequency: "monthly" },
     { path: "/es/guides/como-calificar-un-producto-para-el-usmca", priority: 0.8, changeFrequency: "monthly" },
+    { path: "/es/calculator", priority: 0.9, changeFrequency: "weekly" },
+    { path: "/es/batch", priority: 0.7, changeFrequency: "monthly" },
+    { path: "/es/vault", priority: 0.6, changeFrequency: "monthly" },
     { path: "/legal/disclaimer", priority: 0.3, changeFrequency: "yearly" },
     { path: "/legal/terms", priority: 0.3, changeFrequency: "yearly" },
   ];

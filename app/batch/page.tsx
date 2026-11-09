@@ -1,8 +1,17 @@
+import type { Metadata } from "next";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import BatchQualifier from "@/components/BatchQualifier";
 
-export const metadata = { title: "Batch qualifier - OrigynLX" };
+export const metadata: Metadata = {
+  title: "Batch USMCA Qualification: Screen Your Whole Catalog by CSV | OrigynLX",
+  description:
+    "Upload a CSV of finished products and their bills of materials. OrigynLX runs every SKU through the same rule engine and returns a qualification matrix - free to view, licensed to export.",
+  alternates: {
+    canonical: "/batch",
+    languages: { "en": "/batch", "es": "/es/batch" },
+  },
+};
 
 export default function BatchPage() {
   return (

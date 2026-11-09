@@ -85,6 +85,18 @@ const ES_RESULT_COPY: Record<string, string> = {
   // csv-import errors
   "No rows recognized. Expected columns like: Component Name, HS Subheading, Tariff Item, Origin Country, USMCA Origin Status, Value.":
     "No se reconoció ninguna fila. Se esperan columnas como: Component Name, HS Subheading, Tariff Item, Origin Country, USMCA Origin Status, Value.",
+  // batch review reasons
+  "The matched USMCA rule defines the net cost method only - RVC computed with that method instead of the one in the CSV.":
+    "La regla del T-MEC coincidente define solo el método de costo neto: el RVC se calculó con ese método en lugar del indicado en el CSV.",
+  "The matched USMCA rule defines the transaction value method only - RVC computed with that method instead of the one in the CSV.":
+    "La regla del T-MEC coincidente define solo el método de valor de transacción: el RVC se calculó con ese método en lugar del indicado en el CSV.",
+  "Net-cost method selected without a net_cost column value - RVC was computed on transaction value and is not a valid net-cost result.":
+    "Se seleccionó el método de costo neto sin un valor en la columna net_cost: el RVC se calculó sobre el valor de transacción y no es un resultado válido de costo neto.",
+  "Fails the RVC threshold but total non-originating content is within the 10% de minimis reference limit - may still qualify if the only issue is a tariff shift. Needs review.":
+    "No alcanza el umbral de RVC pero el contenido total no originario está dentro del límite de referencia de minimis del 10%: aún puede calificar si el único problema es un cambio de clasificación. Requiere revisión.",
+  // batch csv parse errors
+  "No data rows found - check the CSV template for the exact format.":
+    "No se encontraron filas de datos - revisa la plantilla CSV para el formato exacto.",
 };
 
 interface RegexRule {
@@ -99,6 +111,63 @@ const ES_REGEX_RULES: RegexRule[] = [
       m[1] +
       " partidas no tienen código HS: es requerido para el certificado y para cualquier determinación de cambio de clasificación.",
   },
+  // batch review reasons (concatenated segments are split by ttBatch below)
+  {
+    re: /^No sourced USMCA rule matched HS (.+?) - threshold defaulted to (\d+)%\. Confirm the governing rule before relying on this result\.$/,
+    es: (m) =>
+      "Ninguna regla del T-MEC con fuente coincidió con el SA " + m[1] + " - el umbral se predeterminó a " + m[2] + "%. Confirma la regla aplicable antes de confiar en este resultado.",
+  },
+  {
+    re: /^Multiple USMCA rules match this HS code - verify which product-specific rule governs, or pin the threshold in the CSV\. Candidates: (.+?)(?: \(\+(\d+) more\))?\.$/,
+    es: (m) =>
+      "Varias reglas del T-MEC coinciden con este código SA - verifica cuál regla específica de producto aplica, o fija el umbral en el CSV. Candidatas: " + m[1] + (m[2] ? " (+" + m[2] + " más)" : "") + ".",
+  },
+  // batch csv parse errors
+  {
+    re: /^Missing required column\(s\): (.+) - download the template for the exact format\. Detected columns: (.*)$/,
+    es: (m) =>
+      "Faltan columnas obligatorias: " + m[1] + " - descarga la plantilla para el formato exacto. Columnas detectadas: " + m[2],
+  },
+  {
+    re: /^Row (\d+): sku is empty - row skipped\.$/,
+    es: (m) => "Fila " + m[1] + ": sku vacío - fila omitida.",
+  },
+  {
+    re: /^Row (\d+): component is empty - row skipped\.$/,
+    es: (m) => "Fila " + m[1] + ": component vacío - fila omitida.",
+  },
+  {
+    re: /^Row (\d+): component_value is missing or not a number - row skipped\.$/,
+    es: (m) => "Fila " + m[1] + ": falta component_value o no es un número - fila omitida.",
+  },
+  {
+    re: /^Row (\d+): transaction_value is missing or not a positive number - row skipped\.$/,
+    es: (m) => "Fila " + m[1] + ": falta transaction_value o no es un número positivo - fila omitida.",
+  },
+  {
+    re: /^Row (\d+): component_origin_status not recognized - counted as non-originating\.$/,
+    es: (m) => "Fila " + m[1] + ": component_origin_status no reconocido - contado como no originario.",
+  },
+  {
+    re: /^SKU (.+): transaction_value differs between rows - the first value \((.+)\) was used\.$/,
+    es: (m) => "SKU " + m[1] + ": transaction_value difiere entre filas - se usó el primer valor (" + m[2] + ").",
+  },
+  // rule-watch alerts (vault and calculator)
+  {
+    re: /^The USMCA rule (.+?) \(HS (.+?)\) relied on is no longer in the OrigynLX registry - it was revised or removed\. Re-check which rule now governs this HS code and re-qualify\.$/,
+    es: (m) =>
+      "La regla del T-MEC en la que confiaba " + m[1] + " (SA " + m[2] + ") ya no está en el registro de OrigynLX: fue revisada o eliminada. Revisa qué regla gobierna ahora este código SA y recalifica.",
+  },
+  {
+    re: /^The USMCA rule (.+?) \(HS (.+?)\) relies on changed in the OrigynLX registry: threshold (.+?)% became (\d+)% \((net cost|transaction value)\)\. Re-run the qualification with the updated rule\.$/,
+    es: (m) =>
+      "La regla del T-MEC en la que confía " + m[1] + " (SA " + m[2] + ") cambió en el registro de OrigynLX: el umbral " + m[3] + "% pasó a " + m[4] + "% (" + (m[5] === "net cost" ? "costo neto" : "valor de transacción") + "). Repite la calificación con la regla actualizada.",
+  },
+  {
+    re: /^The set of sourced USMCA rules matching HS (.+?) \((.+?)\) changed from (\d+) to (\d+) rule\(s\)\. Review which rule now governs this SKU and re-qualify\.$/,
+    es: (m) =>
+      "El conjunto de reglas del T-MEC con fuente que coinciden con el SA " + m[1] + " (" + m[2] + ") cambió de " + m[3] + " a " + m[4] + " regla(s). Revisa qué regla gobierna ahora este SKU y recalifica.",
+  },
 ];
 
 export function tt(text: string, locale: string): string {
@@ -110,4 +179,34 @@ export function tt(text: string, locale: string): string {
     if (m) return rule.es(m);
   }
   return text;
+}
+
+const BATCH_SEGMENT_STARTS = [
+  "The matched USMCA rule defines",
+  "No sourced USMCA rule matched",
+  "Multiple USMCA rules match",
+  "Net-cost method selected",
+  "Fails the RVC threshold",
+];
+
+/**
+ * Batch review reasons concatenate several known reason segments with a
+ * single space. Translate each known segment; unknown text falls back to
+ * English through tt().
+ */
+export function ttBatch(text: string, locale: string): string {
+  if (locale !== "es" || !text) return text;
+  const cuts: number[] = [];
+  for (const start of BATCH_SEGMENT_STARTS) {
+    const i = text.indexOf(start, 1);
+    if (i > 0) cuts.push(i);
+  }
+  cuts.sort((a, b) => a - b);
+  const bounds: number[] = [0, ...cuts];
+  const parts: string[] = [];
+  for (let i = 0; i < bounds.length; i += 1) {
+    const end = i + 1 < bounds.length ? bounds[i + 1] : text.length;
+    parts.push(tt(text.slice(bounds[i], end).trim(), locale));
+  }
+  return parts.join(" ");
 }

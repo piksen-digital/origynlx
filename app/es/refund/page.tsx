@@ -30,6 +30,14 @@ export default function RefundEsPage() {
           <div className="mt-12 max-w-5xl">
             <RefundEstimator locale="es" />
           </div>
+
+          <p className="mt-8 text-[13px] text-paper/40">
+            ¿Ves un error o un número incorrecto?{" "}
+            <a href="/es/contact" className="text-seal underline underline-offset-4 hover:text-seal/80 transition-colors">
+              Reporta un problema
+            </a>
+            .
+          </p>
         </div>
       </section>
       <Footer locale="es" />

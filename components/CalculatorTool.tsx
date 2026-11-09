@@ -658,7 +658,7 @@ export default function CalculatorTool({ locale = "en" }: { locale?: "en" | "es"
           </select>
           <p className="mt-2 text-[12px] text-paper/40">
             {t.thresholdsAcross(totalPickerOptions, ruleGroupCount)}
-            {totalVisibleOptions > cappedVisibleOptions && {t.showingFirst(cappedVisibleOptions)}}
+            {totalVisibleOptions > cappedVisibleOptions && t.showingFirst(cappedVisibleOptions)}
             {totalVisibleOptions === 0 && !selectedRuleRef && isTextileChapter && t.textileNote}
             {totalVisibleOptions === 0 && !selectedRuleRef && !isTextileChapter && hsSubheading.trim() !== "" && t.noRuleMatched}
           </p>

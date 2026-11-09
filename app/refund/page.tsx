@@ -29,6 +29,14 @@ export default function RefundPage() {
           <div className="mt-12 max-w-5xl">
             <RefundEstimator />
           </div>
+
+          <p className="mt-8 text-[13px] text-paper/40">
+            Spotted a bug or a wrong number?{" "}
+            <a href="/contact" className="text-seal underline underline-offset-4 hover:text-seal/80 transition-colors">
+              Report an issue
+            </a>
+            .
+          </p>
         </div>
       </section>
       <Footer />

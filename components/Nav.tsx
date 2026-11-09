@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import Logo from "./Logo";
 import { getStoredLicenseKey, hasFreeChecksLeft, tryRestoreLicense } from "@/lib/trial";
 
@@ -18,7 +19,7 @@ const COPY = {
     ctaDefault: { label: "Start free trial", href: "/calculator" },
     ctaOpen: { label: "Open calculator", href: "/calculator" },
     ctaUpgrade: { label: "Upgrade", href: "/pricing" },
-    langSwitch: { label: "ES", href: "/es" },
+    langSwitch: { label: "ES" },
   },
   es: {
     links: [
@@ -32,13 +33,32 @@ const COPY = {
     ctaDefault: { label: "Prueba gratis", href: "/es/calculator" },
     ctaOpen: { label: "Abrir calculadora", href: "/es/calculator" },
     ctaUpgrade: { label: "Mejorar plan", href: "/es/pricing" },
-    langSwitch: { label: "EN", href: "/" },
+    langSwitch: { label: "EN" },
   },
 };
+
+const LOCALE_PATH_MAP: Record<string, string> = {
+  "/": "/es",
+  "/calculator": "/es/calculator",
+  "/batch": "/es/batch",
+  "/vault": "/es/vault",
+  "/pricing": "/es/pricing",
+  "/contact": "/es/contact",
+  "/refund": "/es/refund",
+  "/guides/how-to-qualify-a-product-for-usmca": "/es/guides/como-calificar-un-producto-para-el-usmca",
+};
+
+function langSwitchHref(locale: "en" | "es", pathname: string): string {
+  if (locale === "en") return LOCALE_PATH_MAP[pathname] ?? "/es";
+  const twin = Object.entries(LOCALE_PATH_MAP).find(([, esPath]) => esPath === pathname);
+  return twin ? twin[0] : "/";
+}
 
 export default function Nav({ locale = "en" }: { locale?: "en" | "es" }) {
   const [open, setOpen] = useState(false);
   const t = COPY[locale];
+  const pathname = usePathname() || "/";
+  const langHref = langSwitchHref(locale, pathname);
   const [cta, setCta] = useState(t.ctaDefault);
 
   useEffect(() => {
@@ -81,7 +101,7 @@ export default function Nav({ locale = "en" }: { locale?: "en" | "es" }) {
 
           <div className="hidden lg:flex items-center gap-3">
             <Link
-              href={t.langSwitch.href}
+              href={langHref}
               className="text-sm font-medium text-paper/50 hover:text-paper transition-colors"
             >
               {t.langSwitch.label}
@@ -119,7 +139,7 @@ export default function Nav({ locale = "en" }: { locale?: "en" | "es" }) {
               </Link>
             ))}
             <Link
-              href={t.langSwitch.href}
+              href={langHref}
               onClick={() => setOpen(false)}
               className="rounded-lg px-3 py-2.5 text-sm font-medium text-paper/60 hover:text-paper transition-colors"
             >

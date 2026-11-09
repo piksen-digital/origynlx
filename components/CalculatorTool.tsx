@@ -32,11 +32,15 @@ import {
   buildGroupedThresholdPickerOptions,
   type ThresholdPickerReference,
 } from "@/lib/usmca-rule-picker";
+import { CALC_COPY } from "./calc-copy";
+import { tt } from "@/lib/result-i18n";
 
 let idCounter = 0;
 const newId = () => `li_${++idCounter}_${Date.now()}`;
 
-export default function CalculatorTool() {
+export default function CalculatorTool({ locale = "en" }: { locale?: "en" | "es" }) {
+  const t = CALC_COPY[locale];
+  const T = (s: string) => tt(s, locale);
   const [productName, setProductName] = useState("");
   const [transactionValue, setTransactionValue] = useState<number>(0);
   const [netCost, setNetCost] = useState<string>("");
@@ -258,7 +262,7 @@ export default function CalculatorTool() {
     });
     const data = await res.json();
     if (!data.valid) {
-      setLicenseError(data.error || "That license key isn't active.");
+      setLicenseError(data.error || t.licenseInactive);
       return;
     }
     storeLicenseKey(licenseInput.trim().toUpperCase());
@@ -322,9 +326,9 @@ export default function CalculatorTool() {
     });
     const data = await res.json();
     if (res.ok && data.id) {
-      setVaultMessage("Saved to your record vault - see the Vault page in the menu.");
+      setVaultMessage(t.savedToVault);
     } else {
-      setVaultMessage(data.error || "Could not save to the vault.");
+      setVaultMessage(data.error || t.vaultSaveFail);
     }
   }
 
@@ -346,9 +350,9 @@ export default function CalculatorTool() {
     const data = await res.json();
     if (res.ok) {
       setWatching(true);
-      setWatchMessage("Watching - if a registry revision touches the rule this product relies on, the alert appears here and on the Vault page.");
+      setWatchMessage(t.watchOn);
     } else {
-      setWatchMessage(data.error || "Could not add this product to the watch list.");
+      setWatchMessage(data.error || t.watchFail);
     }
   }
 
@@ -442,21 +446,21 @@ export default function CalculatorTool() {
       {/* P3: batch qualifier banner */}
       <div className="rounded-card border border-seal/20 bg-seal/[0.04] p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div>
-          <p className="text-sm font-medium text-paper">Importing more than one product?</p>
-          <p className="mt-1 text-[13px] text-paper/55">Batch-qualify your whole catalog in one upload - a qualification matrix for every SKU, with the governing USMCA rule per HS code.</p>
+          <p className="text-sm font-medium text-paper">{t.moreThanOne}</p>
+          <p className="mt-1 text-[13px] text-paper/55">{t.batchBlurb}</p>
         </div>
-        <a href="/batch" className="whitespace-nowrap rounded-full border border-seal/40 px-5 py-2 text-sm font-medium text-seal hover:bg-seal/10 transition-colors">Batch qualifier →</a>
+        <a href={locale === "es" ? "/es/batch" : "/batch"} className="whitespace-nowrap rounded-full border border-seal/40 px-5 py-2 text-sm font-medium text-seal hover:bg-seal/10 transition-colors">{t.batchCta} →</a>
       </div>
 
       {ruleAlert && (
         <div className="rounded-card border border-fail/40 bg-fail/[0.06] p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-sm font-semibold text-fail">USMCA rule change detected</p>
+              <p className="text-sm font-semibold text-fail">{t.ruleChangeTitle}</p>
               <p className="mt-1 text-[13px] leading-relaxed text-paper/65">{ruleAlert.message}</p>
-              <p className="mt-1 text-[12px] text-paper/40">OrigynLX monitors its sourced, revision-tagged rule registry. Treat this as a prompt to re-verify, not legal notice.</p>
+              <p className="mt-1 text-[12px] text-paper/40">{t.ruleChangeNote}</p>
             </div>
-            <button onClick={handleAckAlert} className="whitespace-nowrap text-[13px] text-paper/50 hover:text-paper transition-colors">Dismiss</button>
+            <button onClick={handleAckAlert} className="whitespace-nowrap text-[13px] text-paper/50 hover:text-paper transition-colors">{t.dismiss}</button>
           </div>
         </div>
       )}
@@ -464,11 +468,11 @@ export default function CalculatorTool() {
       {/* Trial / license status bar */}
       <div className="rounded-card border border-white/12 bg-white/[0.03] p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         {checkingLicense ? (
-          <p className="text-sm text-paper/50">Checking license…</p>
+          <p className="text-sm text-paper/50">{t.checkingLicense}</p>
         ) : licensed ? (
-          <p className="text-sm text-pass">License active — unlimited checks and certificates.</p>
+          <p className="text-sm text-pass">{t.licenseActive}</p>
         ) : (
-          <p className="text-sm text-paper/70">{remaining} of {FREE_CHECKS} free checks remaining this month.</p>
+          <p className="text-sm text-paper/70">{t.freeRemaining(remaining)}</p>
         )}
         {!licensed && (
           <div className="flex items-center gap-3">
@@ -476,18 +480,18 @@ export default function CalculatorTool() {
               <input
                 value={licenseInput}
                 onChange={(e) => setLicenseInput(e.target.value)}
-                placeholder="Have a license key?"
+                placeholder={t.haveKey}
                 className="rounded-lg border border-white/15 bg-white/[0.03] px-3 py-2 text-sm text-paper placeholder:text-paper/30 outline-none focus:border-seal/60"
               />
               <button
                 onClick={handleRedeem}
                 className="rounded-lg border border-white/20 px-3 py-2 text-sm text-paper/80 hover:border-seal/60 hover:text-paper transition-colors"
               >
-                Unlock
+              {t.unlock}
               </button>
             </div>
-            <a href="/pricing" className="text-[13px] font-medium text-seal hover:text-seal/80 transition-colors whitespace-nowrap">
-              Get a license →
+            <a href={locale === "es" ? "/es/pricing" : "/pricing"} className="text-[13px] font-medium text-seal hover:text-seal/80 transition-colors whitespace-nowrap">
+              {t.getLicense} →
             </a>
           </div>
         )}
@@ -501,14 +505,14 @@ export default function CalculatorTool() {
             <input
               value={saveName}
               onChange={(e) => setSaveName(e.target.value)}
-              placeholder="Name this product to save it"
+              placeholder={t.nameToSave}
               className="rounded-lg border border-white/15 bg-white/[0.02] px-3 py-2 text-sm text-paper placeholder:text-paper/30 outline-none focus:border-seal/60"
             />
             <button
               onClick={handleSaveBOM}
               className="rounded-lg border border-white/20 px-3 py-2 text-sm text-paper/80 hover:border-seal/60 hover:text-paper transition-colors"
             >
-              Save
+              {t.save}
             </button>
           </div>
           {savedBOMs.length > 0 && (
@@ -516,11 +520,11 @@ export default function CalculatorTool() {
               onClick={() => setShowSaved((v) => !v)}
               className="text-[13px] font-medium text-seal hover:text-seal/80 transition-colors"
             >
-              {showSaved ? "Hide" : `Saved products (${savedBOMs.length})`}
+              {showSaved ? t.hide : t.savedProducts(savedBOMs.length)}
             </button>
           )}
         </div>
-        <p className="mt-2 text-[12px] text-paper/40">Saved to this browser only — nothing is sent anywhere.</p>
+        <p className="mt-2 text-[12px] text-paper/40">{t.savedLocalNote}</p>
 
         {showSaved && (
           <div className="mt-4 space-y-2 border-t border-white/10 pt-4">
@@ -528,11 +532,11 @@ export default function CalculatorTool() {
               <div key={b.id} className="flex items-center justify-between rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2">
                 <div>
                   <p className="text-sm text-paper">{b.name}</p>
-                  <p className="text-[12px] text-paper/40">{new Date(b.savedAt).toLocaleDateString()} • {b.lineItems.length} line items</p>
+                  <p className="text-[12px] text-paper/40">{new Date(b.savedAt).toLocaleDateString()} • {b.lineItems.length + " " + t.lineItems}</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <button onClick={() => handleLoadBOM(b)} className="text-[13px] font-medium text-seal hover:text-seal/80 transition-colors">Load</button>
-                  <button onClick={() => handleDeleteBOM(b.id)} className="text-[13px] text-paper/40 hover:text-fail transition-colors">Delete</button>
+                  <button onClick={() => handleLoadBOM(b)} className="text-[13px] font-medium text-seal hover:text-seal/80 transition-colors">{t.load}</button>
+                  <button onClick={() => handleDeleteBOM(b.id)} className="text-[13px] text-paper/40 hover:text-fail transition-colors">{t.delete}</button>
                 </div>
               </div>
             ))}
@@ -545,60 +549,60 @@ export default function CalculatorTool() {
         {/* Finished product classification */}
         <div>
           <div className="flex items-center justify-between gap-3">
-            <label className="text-[13px] font-medium text-paper/60">Finished product classification</label>
-            <span className="text-[11px] uppercase tracking-wide text-paper/35">USMCA rule routing</span>
+            <label className="text-[13px] font-medium text-paper/60">{t.finishedClassification}</label>
+            <span className="text-[11px] uppercase tracking-wide text-paper/35">{t.ruleRouting}</span>
           </div>
           <div className="mt-3 grid gap-5 sm:grid-cols-2">
             <div>
-              <label className="text-[12px] text-paper/45">HS heading</label>
-              <input value={hsHeading} onChange={(e) => setHsHeading(e.target.value)} placeholder="e.g. 85" className="mt-2 w-full rounded-lg border border-white/15 bg-white/[0.02] px-4 py-2.5 text-paper outline-none focus:border-seal/60" />
+              <label className="text-[12px] text-paper/45">{t.hsHeading}</label>
+              <input value={hsHeading} onChange={(e) => setHsHeading(e.target.value)} placeholder={t.phHeading} className="mt-2 w-full rounded-lg border border-white/15 bg-white/[0.02] px-4 py-2.5 text-paper outline-none focus:border-seal/60" />
             </div>
             <div>
-              <label className="text-[12px] text-paper/45">HS subheading *</label>
-              <input value={hsSubheading} onChange={(e) => setHsSubheading(e.target.value)} placeholder="e.g. 8536.50" className="mt-2 w-full rounded-lg border border-white/15 bg-white/[0.02] px-4 py-2.5 text-paper outline-none focus:border-seal/60" />
+              <label className="text-[12px] text-paper/45">{t.hsSubheading}</label>
+              <input value={hsSubheading} onChange={(e) => setHsSubheading(e.target.value)} placeholder={t.phSubheading} className="mt-2 w-full rounded-lg border border-white/15 bg-white/[0.02] px-4 py-2.5 text-paper outline-none focus:border-seal/60" />
             </div>
           </div>
           <button type="button" onClick={() => setShowAdvancedClassification((v) => !v)} className="mt-3 text-[12px] font-medium text-seal hover:text-seal/80 transition-colors">
-            {showAdvancedClassification ? "Hide advanced classification" : "Show advanced tariff-item details"}
+            {showAdvancedClassification ? t.hideAdvanced : t.showAdvanced}
           </button>
           {showAdvancedClassification && (
             <div className="mt-3 grid gap-5 sm:grid-cols-2 rounded-lg border border-white/10 bg-white/[0.02] p-4">
               <div>
-                <label className="text-[12px] text-paper/45">U.S. HTS tariff item</label>
-                <input value={tariffItem} onChange={(e) => setTariffItem(e.target.value)} placeholder="e.g. 8536.50.40" className="mt-2 w-full rounded-lg border border-white/15 bg-white/[0.02] px-4 py-2.5 text-paper outline-none focus:border-seal/60" />
+                <label className="text-[12px] text-paper/45">{t.usHts}</label>
+                <input value={tariffItem} onChange={(e) => setTariffItem(e.target.value)} placeholder={t.phTariffItem} className="mt-2 w-full rounded-lg border border-white/15 bg-white/[0.02] px-4 py-2.5 text-paper outline-none focus:border-seal/60" />
               </div>
               <div>
-                <label className="text-[12px] text-paper/45">USMCA Annex 4-B tariff item</label>
-                <input value={annexTariffItem} onChange={(e) => setAnnexTariffItem(e.target.value)} placeholder="e.g. 8536.50.aa" className="mt-2 w-full rounded-lg border border-white/15 bg-white/[0.02] px-4 py-2.5 text-paper outline-none focus:border-seal/60" />
+                <label className="text-[12px] text-paper/45">{t.annexItem}</label>
+                <input value={annexTariffItem} onChange={(e) => setAnnexTariffItem(e.target.value)} placeholder={t.phAnnexItem} className="mt-2 w-full rounded-lg border border-white/15 bg-white/[0.02] px-4 py-2.5 text-paper outline-none focus:border-seal/60" />
               </div>
             </div>
           )}
           {tariffItem.trim() && (
             <div className="mt-3 rounded-lg border border-seal/25 bg-seal/[0.06] p-4">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-seal/15 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-seal">Tariff-item-specific rule detected</span>
-                <span className="text-[12px] text-paper/45">Manual rule entry remains available.</span>
+                <span className="rounded-full bg-seal/15 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-seal">{t.tariffRuleDetected}</span>
+                <span className="text-[12px] text-paper/45">{t.manualRuleNote}</span>
               </div>
-              <p className="mt-2 text-[12px] leading-relaxed text-paper/55">This classification may have a USMCA rule that overrides or qualifies the broader subheading rule. Enter the exact tariff item if you have it; the calculator will flag it for manual rule lookup.</p>
+              <p className="mt-2 text-[12px] leading-relaxed text-paper/55">{t.tariffRuleBlurb}</p>
             </div>
           )}
         </div>
 
         <div className="grid gap-5 sm:grid-cols-2">
           <div>
-            <label className="text-[13px] font-medium text-paper/60">Product name</label>
-            <input value={productName} onChange={(e) => setProductName(e.target.value)} placeholder="e.g. Aluminum bracket assembly" className="mt-2 w-full rounded-lg border border-white/15 bg-white/[0.02] px-4 py-2.5 text-paper outline-none focus:border-seal/60" />
+            <label className="text-[13px] font-medium text-paper/60">{t.productName}</label>
+            <input value={productName} onChange={(e) => setProductName(e.target.value)} placeholder={t.phProduct} className="mt-2 w-full rounded-lg border border-white/15 bg-white/[0.02] px-4 py-2.5 text-paper outline-none focus:border-seal/60" />
           </div>
           <div>
-            <label className="text-[13px] font-medium text-paper/60">Transaction value (USD)</label>
+            <label className="text-[13px] font-medium text-paper/60">{t.transactionValue}</label>
             <input type="number" min={0} value={transactionValue || ""} onChange={(e) => setTransactionValue(Number(e.target.value))} placeholder="0.00" className="mt-2 w-full rounded-lg border border-white/15 bg-white/[0.02] px-4 py-2.5 text-paper outline-none focus:border-seal/60" />
           </div>
           <div>
-            <label className="text-[13px] font-medium text-paper/60">Production country</label>
-            <input value={productionCountry} onChange={(e) => setProductionCountry(e.target.value)} placeholder="e.g. Mexico" className="mt-2 w-full rounded-lg border border-white/15 bg-white/[0.02] px-4 py-2.5 text-paper outline-none focus:border-seal/60" />
+            <label className="text-[13px] font-medium text-paper/60">{t.productionCountry}</label>
+            <input value={productionCountry} onChange={(e) => setProductionCountry(e.target.value)} placeholder={t.phCountry} className="mt-2 w-full rounded-lg border border-white/15 bg-white/[0.02] px-4 py-2.5 text-paper outline-none focus:border-seal/60" />
           </div>
           <div>
-            <label className="text-[13px] font-medium text-paper/60">Importing Party</label>
+            <label className="text-[13px] font-medium text-paper/60">{t.importingParty}</label>
             <select value={importingParty} onChange={(e) => setImportingParty(e.target.value)} className="mt-2 w-full rounded-lg border border-white/15 bg-white/[0.02] px-4 py-2.5 text-paper outline-none focus:border-seal/60">
               <option>United States</option><option>Canada</option><option>Mexico</option>
             </select>
@@ -607,67 +611,67 @@ export default function CalculatorTool() {
 
         {/* Rule basis */}
         <div>
-          <label className="text-[13px] font-medium text-paper/60">Rule basis</label>
+          <label className="text-[13px] font-medium text-paper/60">{t.ruleBasis}</label>
           <select value={ruleBasis} onChange={(e) => handleRuleBasisChange(e.target.value as RuleBasis)} className="mt-2 w-full rounded-lg border border-white/15 bg-white/[0.02] px-4 py-2.5 text-paper outline-none focus:border-seal/60">
-            <option value="custom">Custom rule</option>
-            <option value="tariff-shift">Tariff shift</option>
-            <option value="rvc">Regional value content (RVC)</option>
-            <option value="tariff-shift-or-rvc">Tariff shift or RVC</option>
-            <option value="special">Special / product-specific rule</option>
+            <option value="custom">{t.optCustom}</option>
+            <option value="tariff-shift">{t.optTariffShift}</option>
+            <option value="rvc">{t.optRvc}</option>
+            <option value="tariff-shift-or-rvc">{t.optShiftOrRvc}</option>
+            <option value="special">{t.optSpecial}</option>
           </select>
         </div>
 
         {(ruleBasis === "rvc" || ruleBasis === "tariff-shift-or-rvc" || (ruleBasis === "special" && selectedRuleRef)) && (
           <div className="rounded-lg border border-white/10 bg-white/[0.02] p-4">
-            <label className="text-[13px] font-medium text-paper/60">RVC method</label>
+            <label className="text-[13px] font-medium text-paper/60">{t.rvcMethod}</label>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
-              <label className="flex items-center gap-3 rounded-lg border border-white/10 px-3 py-2.5 text-sm text-paper/70"><input type="radio" name="rvc-method" checked={rvcMethod === "transaction-value"} onChange={() => handleRvcMethodChange("transaction-value")} className="cursor-pointer" /> Transaction value</label>
-              <label className="flex items-center gap-3 rounded-lg border border-white/10 px-3 py-2.5 text-sm text-paper/70"><input type="radio" name="rvc-method" checked={rvcMethod === "net-cost"} onChange={() => handleRvcMethodChange("net-cost")} className="cursor-pointer" /> Net cost</label>
+              <label className="flex items-center gap-3 rounded-lg border border-white/10 px-3 py-2.5 text-sm text-paper/70"><input type="radio" name="rvc-method" checked={rvcMethod === "transaction-value"} onChange={() => handleRvcMethodChange("transaction-value")} className="cursor-pointer" /> {t.transactionValueMethod}</label>
+              <label className="flex items-center gap-3 rounded-lg border border-white/10 px-3 py-2.5 text-sm text-paper/70"><input type="radio" name="rvc-method" checked={rvcMethod === "net-cost"} onChange={() => handleRvcMethodChange("net-cost")} className="cursor-pointer" /> {t.netCostMethod}</label>
             </div>
             <div className="mt-4">
             {method === "net-cost" && (
               <div>
-                <label className="text-[12px] text-paper/45">Net cost of the good (USD)</label>
-                <input type="number" min={0} value={netCost} onChange={(e) => setNetCost(e.target.value)} placeholder="Total cost minus marketing/royalties/shipping-packing/non-allowable interest" className="mt-2 w-full rounded-lg border border-white/15 bg-white/[0.02] px-4 py-2.5 text-paper outline-none focus:border-seal/60" />
-                <p className="mt-2 text-[11px] leading-relaxed text-paper/40">USMCA net cost = total cost less sales promotion, marketing and after-sales service costs, royalties, shipping and packing costs, and non-allowable interest (Article 4.5). Mandatory for finished motor vehicles.</p>
+                <label className="text-[12px] text-paper/45">{t.netCostLabel}</label>
+                <input type="number" min={0} value={netCost} onChange={(e) => setNetCost(e.target.value)} placeholder={t.phNetCost} className="mt-2 w-full rounded-lg border border-white/15 bg-white/[0.02] px-4 py-2.5 text-paper outline-none focus:border-seal/60" />
+                <p className="mt-2 text-[11px] leading-relaxed text-paper/40">{t.netCostNote}</p>
               </div>
             )}
-              <label className="text-[12px] text-paper/45">Threshold (%)</label>
+              <label className="text-[12px] text-paper/45">{t.thresholdLabel}</label>
               <input type="number" min={0} max={100} value={threshold} onChange={(e) => { setThreshold(Number(e.target.value)); setCategoryId(""); }} className="mt-2 w-full rounded-lg border border-white/15 bg-white/[0.02] px-4 py-2.5 text-paper outline-none focus:border-seal/60" />
             </div>
           </div>
         )}
 
-        {ruleBasis === "tariff-shift" && <div className="rounded-lg border border-white/10 bg-white/[0.02] p-4 text-[13px] leading-relaxed text-paper/55">Tariff-shift rules do not use an RVC percentage threshold. If your product qualifies under a tariff-shift rule (e.g. change in classification), it passes the origin test without an RVC calculation. If it doesn't, and an RVC alternative is available, select that from the category picker below.</div>}
+        {ruleBasis === "tariff-shift" && <div className="rounded-lg border border-white/10 bg-white/[0.02] p-4 text-[13px] leading-relaxed text-paper/55">{t.tariffShiftNote}</div>}
 
         <div>
-          <label className="text-[13px] font-medium text-paper/60">Verified rule category (optional)</label>
+          <label className="text-[13px] font-medium text-paper/60">{t.ruleCategory}</label>
           <select value={categoryId} onChange={(e) => handleCategoryChange(e.target.value)} className="mt-2 w-full rounded-lg border border-white/15 bg-white/[0.02] px-4 py-2.5 text-paper outline-none focus:border-seal/60">
-            <option value="">Custom / manually set</option>
+            <option value="">{t.optCustomManual}</option>
             {cappedRuleGroups.map((g) => (
               <optgroup key={g.sector} label={g.sector}>
                 {g.options.map((r) => (
-                  <option key={r.id} value={r.id}>{r.hsRange} — {r.thresholdPercent}% ({r.method === "net-cost" ? "net cost" : "transaction value"})</option>
+                  <option key={r.id} value={r.id}>{r.hsRange} — {r.thresholdPercent}% ({r.method === "net-cost" ? t.netCostShort : t.transactionValueShort})</option>
                 ))}
               </optgroup>
             ))}
           </select>
           <p className="mt-2 text-[12px] text-paper/40">
-            {totalPickerOptions} sourced USMCA thresholds across {ruleGroupCount} sectors — type an HS heading or subheading above to narrow this list.
-            {totalVisibleOptions > cappedVisibleOptions && ` Showing the first ${cappedVisibleOptions} matches — narrow by HS code to see more.`}
-            {totalVisibleOptions === 0 && !selectedRuleRef && isTextileChapter && " Textiles & apparel (HS chapters 50-63) have no RVC thresholds under USMCA — qualification runs through the yarn/fiber-forward tariff shift plus supply and cut-and-sew assembly rules (HTSUS GN 11(o)), not RVC."}
-            {totalVisibleOptions === 0 && !selectedRuleRef && !isTextileChapter && hsSubheading.trim() !== "" && " No sourced rule matched that HS code — set the threshold manually."}
+            {t.thresholdsAcross(totalPickerOptions, ruleGroupCount)}
+            {totalVisibleOptions > cappedVisibleOptions && {t.showingFirst(cappedVisibleOptions)}}
+            {totalVisibleOptions === 0 && !selectedRuleRef && isTextileChapter && t.textileNote}
+            {totalVisibleOptions === 0 && !selectedRuleRef && !isTextileChapter && hsSubheading.trim() !== "" && t.noRuleMatched}
           </p>
-          {(() => { const ref = selectedRuleRef; if (!ref) return null; const badge = ref.auditStatus === "human_verified" ? { cls: "bg-pass/15 text-pass", text: "Human verified" } : ref.auditStatus === "primary_sourced_unaudited" ? { cls: "bg-seal/15 text-seal", text: "Primary-sourced, audit pending" } : { cls: "bg-fail/15 text-fail", text: "Unverified" }; return (
+          {(() => { const ref = selectedRuleRef; if (!ref) return null; const badge = ref.auditStatus === "human_verified" ? { cls: "bg-pass/15 text-pass", text: t.humanVerified } : ref.auditStatus === "primary_sourced_unaudited" ? { cls: "bg-seal/15 text-seal", text: t.primarySourced } : { cls: "bg-fail/15 text-fail", text: t.unverified }; return (
             <div className="mt-3 rounded-lg border border-white/10 bg-white/[0.02] p-4 space-y-2">
               <div className="flex flex-wrap items-center gap-2">
                 <span className={`text-[11px] font-semibold uppercase tracking-wide rounded-full px-2 py-0.5 ${badge.cls}`}>{badge.text}</span>
                 <span className="text-[12px] text-paper/45">{ref.sector} · HS {ref.hsRange}</span>
               </div>
               <p className="text-[13px] font-medium text-paper/80">{ref.label}</p>
-              <p className="text-[12px] text-paper/55">Threshold: {ref.thresholdPercent}% {ref.method === "net-cost" ? "net cost" : "transaction value"}{ref.ruleEffectiveFrom ? ` · effective ${ref.ruleEffectiveFrom}` : ""}{ref.ruleEffectiveTo ? ` until ${ref.ruleEffectiveTo}` : ""}</p>
-              {ref.tariffShiftRule && <p className="text-[12px] leading-relaxed text-paper/55"><span className="font-medium text-paper/70">Tariff-shift rule: </span>{ref.tariffShiftRule}</p>}
-              {ref.condition && <p className="text-[12px] leading-relaxed text-paper/55"><span className="font-medium text-paper/70">RVC path condition: </span>{ref.condition}</p>}
+              <p className="text-[12px] text-paper/55">{t.thresholdWord}: {ref.thresholdPercent}% {ref.method === "net-cost" ? t.netCostShort : t.transactionValueShort}{ref.ruleEffectiveFrom ? ` · ${t.effective} ${ref.ruleEffectiveFrom}` : ""}{ref.ruleEffectiveTo ? ` ${t.until} ${ref.ruleEffectiveTo}` : ""}</p>
+              {ref.tariffShiftRule && <p className="text-[12px] leading-relaxed text-paper/55"><span className="font-medium text-paper/70">{t.tariffShiftRuleLabel}</span>{ref.tariffShiftRule}</p>}
+              {ref.condition && <p className="text-[12px] leading-relaxed text-paper/55"><span className="font-medium text-paper/70">{t.rvcConditionLabel}</span>{ref.condition}</p>}
               {ref.notes && <p className="text-[13px] leading-relaxed text-paper/60">{ref.notes}</p>}
               {ref.sources.length > 0 && <ul className="space-y-1">{ref.sources.map((s: { url: string; title: string }) => <li key={s.url}><a href={s.url} target="_blank" rel="noopener noreferrer" className="text-[12px] text-seal hover:text-seal/80 transition-colors">{s.title}</a></li>)}</ul>}
             </div>
@@ -678,35 +682,35 @@ export default function CalculatorTool() {
         <div>
           <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
             <div>
-              <label className="text-[13px] font-medium text-paper/60">Bill of materials</label>
-              <p className="mt-1 text-[12px] text-paper/35">Origin country and USMCA origin status are separate. Country alone does not establish originating status.</p>
+              <label className="text-[13px] font-medium text-paper/60">{t.bomLabel}</label>
+              <p className="mt-1 text-[12px] text-paper/35">{t.bomHint}</p>
             </div>
             <div className="flex items-center gap-4">
-              <button onClick={downloadBomTemplate} className="text-[13px] font-medium text-paper/60 hover:text-paper transition-colors">Download CSV template</button>
-              <button onClick={() => fileInputRef.current?.click()} className="text-[13px] font-medium text-paper/60 hover:text-paper transition-colors">Import CSV</button>
+              <button onClick={downloadBomTemplate} className="text-[13px] font-medium text-paper/60 hover:text-paper transition-colors">{t.downloadTemplate}</button>
+              <button onClick={() => fileInputRef.current?.click()} className="text-[13px] font-medium text-paper/60 hover:text-paper transition-colors">{t.importCsv}</button>
               <input ref={fileInputRef} type="file" accept=".csv,text/csv" onChange={handleCsvFile} className="hidden" />
-              <button onClick={addItem} className="text-[13px] font-medium text-seal hover:text-seal/80 transition-colors">+ Add line item</button>
+              <button onClick={addItem} className="text-[13px] font-medium text-seal hover:text-seal/80 transition-colors">+ {t.addLineItem}</button>
             </div>
           </div>
-          {csvErrors.length > 0 && <div className="mb-3 space-y-1">{csvErrors.map((e, i) => <p key={i} className="text-[12px] text-fail">{e}</p>)}</div>}
+          {csvErrors.length > 0 && <div className="mb-3 space-y-1">{csvErrors.map((e, i) => <p key={i} className="text-[12px] text-fail">{T(e)}</p>)}</div>}
           <div className="space-y-2">
             {lineItems.map((item) => {
               const status = item.originStatus || (item.originating ? "originating" : "non-originating");
               return <div key={item.id} className="rounded-lg border border-white/8 bg-white/[0.015] p-3">
                 <div className="grid grid-cols-12 gap-2 items-center">
-                  <input value={item.description} onChange={(e) => updateItem(item.id, { description: e.target.value })} placeholder="Component" className="col-span-12 sm:col-span-3 rounded-lg border border-white/15 bg-white/[0.02] px-3 py-2 text-sm text-paper outline-none focus:border-seal/60" />
-                  <input value={item.hsCode} onChange={(e) => updateItem(item.id, { hsCode: e.target.value })} placeholder="HS subheading" className="col-span-6 sm:col-span-2 rounded-lg border border-white/15 bg-white/[0.02] px-3 py-2 text-sm text-paper outline-none focus:border-seal/60" />
-                  <input value={item.tariffItem || ""} onChange={(e) => updateItem(item.id, { tariffItem: e.target.value })} placeholder="Tariff item" className="col-span-6 sm:col-span-2 rounded-lg border border-white/15 bg-white/[0.02] px-3 py-2 text-sm text-paper outline-none focus:border-seal/60" />
-                  <input value={item.countryOfOrigin} onChange={(e) => updateItem(item.id, { countryOfOrigin: e.target.value.toUpperCase() })} placeholder="Origin country" maxLength={2} className="col-span-4 sm:col-span-1 rounded-lg border border-white/15 bg-white/[0.02] px-3 py-2 text-sm text-paper uppercase outline-none focus:border-seal/60" />
-                  <input type="number" value={item.value || ""} onChange={(e) => updateItem(item.id, { value: Number(e.target.value) })} placeholder="Value" className="col-span-5 sm:col-span-2 rounded-lg border border-white/15 bg-white/[0.02] px-3 py-2 text-sm text-paper outline-none focus:border-seal/60" />
-                  <button onClick={() => removeItem(item.id)} aria-label="Remove line item" className="col-span-2 sm:col-span-1 text-paper/40 hover:text-fail transition-colors text-sm">✕</button>
+                  <input value={item.description} onChange={(e) => updateItem(item.id, { description: e.target.value })} placeholder={t.phComponent} className="col-span-12 sm:col-span-3 rounded-lg border border-white/15 bg-white/[0.02] px-3 py-2 text-sm text-paper outline-none focus:border-seal/60" />
+                  <input value={item.hsCode} onChange={(e) => updateItem(item.id, { hsCode: e.target.value })} placeholder={t.phComponentHs} className="col-span-6 sm:col-span-2 rounded-lg border border-white/15 bg-white/[0.02] px-3 py-2 text-sm text-paper outline-none focus:border-seal/60" />
+                  <input value={item.tariffItem || ""} onChange={(e) => updateItem(item.id, { tariffItem: e.target.value })} placeholder={t.phComponentTariff} className="col-span-6 sm:col-span-2 rounded-lg border border-white/15 bg-white/[0.02] px-3 py-2 text-sm text-paper outline-none focus:border-seal/60" />
+                  <input value={item.countryOfOrigin} onChange={(e) => updateItem(item.id, { countryOfOrigin: e.target.value.toUpperCase() })} placeholder={t.phComponentCountry} maxLength={2} className="col-span-4 sm:col-span-1 rounded-lg border border-white/15 bg-white/[0.02] px-3 py-2 text-sm text-paper uppercase outline-none focus:border-seal/60" />
+                  <input type="number" value={item.value || ""} onChange={(e) => updateItem(item.id, { value: Number(e.target.value) })} placeholder={t.phValue} className="col-span-5 sm:col-span-2 rounded-lg border border-white/15 bg-white/[0.02] px-3 py-2 text-sm text-paper outline-none focus:border-seal/60" />
+                  <button onClick={() => removeItem(item.id)} aria-label={t.removeLineItemA11y} className="col-span-2 sm:col-span-1 text-paper/40 hover:text-fail transition-colors text-sm">✕</button>
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-3">
                   <select value={status} onChange={(e) => { const next = e.target.value as NonNullable<BOMLineItem["originStatus"]>; updateItem(item.id, { originStatus: next, originating: next === "originating" }); }} className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-1.5 text-sm text-paper outline-none focus:border-seal/60">
-                    <option value="originating">USMCA originating</option><option value="non-originating">Non-originating</option><option value="undetermined">Undetermined</option>
+                    <option value="originating">{t.optOriginating}</option><option value="non-originating">{t.optNonOriginating}</option><option value="undetermined">{t.optUndetermined}</option>
                   </select>
-                  <span className="text-[11px] text-paper/35">Origin country is factual; USMCA status is a separate qualification determination.</span>
-                  {item.tariffItem && <span className="rounded-full bg-seal/10 px-2 py-0.5 text-[10px] font-medium text-seal">Tariff item recorded</span>}
+                  <span className="text-[11px] text-paper/35">{t.originCountryNote}</span>
+                  {item.tariffItem && <span className="rounded-full bg-seal/10 px-2 py-0.5 text-[10px] font-medium text-seal">{t.tariffItemRecorded}</span>}
                 </div>
               </div>;
             })}
@@ -714,11 +718,11 @@ export default function CalculatorTool() {
         </div>
 
         <div className="rounded-lg border border-white/10 bg-white/[0.02] p-4">
-          <div className="flex items-start gap-3"><span className="mt-0.5 text-seal">◈</span><div><p className="text-[13px] font-medium text-paper/75">De minimis safeguard</p><p className="mt-1 text-[12px] leading-relaxed text-paper/55">USMCA de minimis (Art. 4.12) is a separate allowance, not an RVC threshold: if the only problem is inputs that fail a required tariff shift, the good can still qualify when those materials are ≤ 10% of its transaction value (or total cost, where the net cost method applies). Textiles (ch. 50-63) use a weight-based test instead.</p></div></div>
+          <div className="flex items-start gap-3"><span className="mt-0.5 text-seal">◈</span><div><p className="text-[13px] font-medium text-paper/75">{t.deminimisTitle}</p><p className="mt-1 text-[12px] leading-relaxed text-paper/55">{t.deminimisBlurb}</p></div></div>
         </div>
 
-        <button onClick={handleCalculate} disabled={blocked} className="w-full rounded-full bg-seal text-ink text-sm font-semibold h-12 hover:bg-seal/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">Calculate RVC</button>
-        {blocked && <div className="text-center space-y-3"><p className="text-[13px] text-paper/60">You've used your {FREE_CHECKS} free checks for this month. They reset on the first of next month.</p><a href="/pricing" className="inline-flex items-center justify-center gap-2 text-[13px] font-medium text-seal hover:text-seal/80 transition-colors">Unlock unlimited checks <span>→</span></a></div>}
+        <button onClick={handleCalculate} disabled={blocked} className="w-full rounded-full bg-seal text-ink text-sm font-semibold h-12 hover:bg-seal/90 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">{t.calculateCta}</button>
+        {blocked && <div className="text-center space-y-3"><p className="text-[13px] text-paper/60">{t.usedFreeChecks}</p><a href={locale === "es" ? "/es/pricing" : "/pricing"} className="inline-flex items-center justify-center gap-2 text-[13px] font-medium text-seal hover:text-seal/80 transition-colors">{t.unlockUnlimited} <span>→</span></a></div>}
       </div>
 
       {/* Results */}
@@ -726,16 +730,16 @@ export default function CalculatorTool() {
         <div className="rounded-card border border-white/12 bg-white/[0.03] p-6 sm:p-8">
           <div className="flex flex-wrap items-center gap-4 justify-between">
             <div>
-              <span className="text-[13px] font-medium uppercase tracking-[0.08em] text-paper/50">Result</span>
+              <span className="text-[13px] font-medium uppercase tracking-[0.08em] text-paper/50">{t.resultWord}</span>
               <p className="mt-2 font-display text-4xl font-semibold text-paper">{result.rvcPercent}%</p>
-              <p className="text-[13px] text-paper/50">vs {result.thresholdPercent}% threshold</p>
+              <p className="text-[13px] text-paper/50">{t.vsThreshold(result.thresholdPercent)}</p>
             </div>
             <span
               className={`rounded-full px-4 py-1.5 text-sm font-semibold ${
                 result.qualifies ? "bg-pass/15 text-pass" : "bg-fail/15 text-fail"
               }`}
             >
-              {result.qualifies ? "Qualifies" : "Does not qualify"}
+              {result.qualifies ? t.qualifies : t.doesNotQualify}
             </span>
           </div>
 
@@ -743,7 +747,7 @@ export default function CalculatorTool() {
             <div className="mt-6 space-y-2">
               {result.warnings.map((w, i) => (
                 <p key={i} className="text-[13px] leading-relaxed text-paper/60 border-l-2 border-seal/40 pl-3">
-                  {w}
+                  {T(w)}
                 </p>
               ))}
             </div>
@@ -753,15 +757,14 @@ export default function CalculatorTool() {
             <div className="mt-6 rounded-lg border border-white/10 bg-white/[0.02] p-5">
               <div className="flex items-center justify-between">
                 <span className="text-[13px] font-medium uppercase tracking-[0.08em] text-paper/50">
-                  De minimis reference check
+                  {t.deminimisCheck}
                 </span>
                 <span className={`text-sm font-semibold ${deMinimis.withinDeMinimis ? "text-pass" : "text-fail"}`}>
-                  {deMinimis.nonOriginatingPercent}% {deMinimis.withinDeMinimis ? "— within 10% reference limit" : "— exceeds 10% reference limit"}
+                  {deMinimis.nonOriginatingPercent}% {deMinimis.withinDeMinimis ? "— " + t.withinLimit : "— " + t.exceedsLimit}
                 </span>
               </div>
               <p className="mt-3 text-[13px] leading-relaxed text-paper/55">
-                This only matters if your product also needs a tariff-shift test and some inputs fail it — it
-                does not change the RVC result above, and those materials still count as non-originating there.
+                {t.deminimisCheckNote}
               </p>
             </div>
           )}
@@ -770,68 +773,68 @@ export default function CalculatorTool() {
           {/* P1: dollar-savings view */}
           <div className="mt-6 rounded-lg border border-seal/25 bg-seal/[0.05] p-5">
             <div className="flex items-center justify-between gap-3">
-              <span className="text-[13px] font-medium uppercase tracking-[0.08em] text-seal">What is this worth?</span>
+              <span className="text-[13px] font-medium uppercase tracking-[0.08em] text-seal">{t.worthTitle}</span>
               {savings && (
                 <span className="text-sm font-semibold text-seal">
-                  {"$" + savings.totalAnnualAvoided.toLocaleString("en-US", { maximumFractionDigits: 0 }) + " saved per year"}
+                  {"$" + savings.totalAnnualAvoided.toLocaleString("en-US", { maximumFractionDigits: 0 }) + " " + t.savedPerYear}
                 </span>
               )}
             </div>
             <p className="mt-2 text-[12px] leading-relaxed text-paper/55">
-              USMCA-qualifying goods enter duty-free, skip the US Merchandise Processing Fee on entries from Canada and Mexico, and every universal surcharge layer to date has exempted them. Estimate the annual upside:
+              {t.savingsBlurb}
             </p>
             <div className="mt-4 grid gap-4 sm:grid-cols-4">
               <div>
-                <label className="text-[12px] text-paper/45">Annual import value (USD)</label>
+                <label className="text-[12px] text-paper/45">{t.annualValue}</label>
                 <input type="number" min={0} value={annualImportValue} onChange={(e) => setAnnualImportValue(e.target.value)} placeholder="e.g. 250000" className="mt-2 w-full rounded-lg border border-white/15 bg-white/[0.02] px-3 py-2 text-sm text-paper outline-none focus:border-seal/60" />
               </div>
               <div>
-                <label className="text-[12px] text-paper/45">MFN duty rate (%)</label>
+                <label className="text-[12px] text-paper/45">{t.mfnRate}</label>
                 <input type="number" min={0} step="0.1" value={mfnRateInput} onChange={(e) => setMfnRateInput(e.target.value)} placeholder="e.g. 4.2" className="mt-2 w-full rounded-lg border border-white/15 bg-white/[0.02] px-3 py-2 text-sm text-paper outline-none focus:border-seal/60" />
               </div>
               <div>
-                <label className="text-[12px] text-paper/45">Current surcharge layer (%)</label>
+                <label className="text-[12px] text-paper/45">{t.surchargeRate}</label>
                 <input type="number" min={0} step="0.1" value={surchargeRateInput} onChange={(e) => setSurchargeRateInput(e.target.value)} placeholder="0" className="mt-2 w-full rounded-lg border border-white/15 bg-white/[0.02] px-3 py-2 text-sm text-paper outline-none focus:border-seal/60" />
               </div>
               <div>
-                <label className="text-[12px] text-paper/45">Entries per year</label>
+                <label className="text-[12px] text-paper/45">{t.entriesPerYear}</label>
                 <input type="number" min={1} value={entriesPerYearInput} onChange={(e) => setEntriesPerYearInput(e.target.value)} placeholder="12" className="mt-2 w-full rounded-lg border border-white/15 bg-white/[0.02] px-3 py-2 text-sm text-paper outline-none focus:border-seal/60" />
               </div>
             </div>
             {savings && (
               <div className="mt-4 grid gap-3 sm:grid-cols-4 text-[13px]">
                 <div className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2">
-                  <p className="text-paper/45">MFN duty avoided</p>
+                  <p className="text-paper/45">{t.mfnAvoided}</p>
                   <p className="mt-1 font-semibold text-paper">{"$" + savings.annualDutyAvoided.toLocaleString("en-US", { maximumFractionDigits: 0 })}</p>
                 </div>
                 <div className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2">
-                  <p className="text-paper/45">Surcharge avoided</p>
+                  <p className="text-paper/45">{t.surchargeAvoided}</p>
                   <p className="mt-1 font-semibold text-paper">{"$" + savings.annualSurchargeAvoided.toLocaleString("en-US", { maximumFractionDigits: 0 })}</p>
                 </div>
                 <div className="rounded-lg border border-white/10 bg-white/[0.02] px-3 py-2">
-                  <p className="text-paper/45">MPF avoided</p>
+                  <p className="text-paper/45">{t.mpfAvoided}</p>
                   <p className="mt-1 font-semibold text-paper">{"$" + savings.annualMpfAvoided.toLocaleString("en-US", { maximumFractionDigits: 0 })}</p>
                 </div>
                 <div className="rounded-lg border border-seal/30 bg-seal/10 px-3 py-2">
-                  <p className="text-paper/45">Total per year</p>
+                  <p className="text-paper/45">{t.totalPerYear}</p>
                   <p className="mt-1 font-semibold text-seal">{"$" + savings.totalAnnualAvoided.toLocaleString("en-US", { maximumFractionDigits: 0 })}</p>
                 </div>
               </div>
             )}
             {savings && savings.warnings.map((w, i) => (
-              <p key={i} className="mt-3 border-l-2 border-fail/40 pl-3 text-[12px] leading-relaxed text-paper/60">{w}</p>
+              <p key={i} className="mt-3 border-l-2 border-fail/40 pl-3 text-[12px] leading-relaxed text-paper/60">{T(w)}</p>
             ))}
             {savings && remedyFlags.some((f) => f.kind === "232-steel" || f.kind === "232-aluminum") && (
               <p className="mt-3 border-l-2 border-fail/60 pl-3 text-[12px] font-medium leading-relaxed text-fail/90">
-                Section 232 steel/aluminum duties (50%) apply even to USMCA-qualifying goods classified in these chapters - the estimate above assumes full duty-free treatment and overstates your savings for steel and aluminum products.
+                {t.remedySavingsNote}
               </p>
             )}
             {savings && (
               <details className="mt-3 text-[12px] text-paper/50">
-                <summary className="cursor-pointer text-paper/60">How these numbers work</summary>
+                <summary className="cursor-pointer text-paper/60">{t.howNumbersWork}</summary>
                 <ul className="mt-2 list-disc space-y-1.5 pl-4">
                   {savings.notes.map((n, i) => (
-                    <li key={i} className="leading-relaxed">{n}</li>
+                    <li key={i} className="leading-relaxed">{T(n)}</li>
                   ))}
                 </ul>
               </details>
@@ -841,34 +844,34 @@ export default function CalculatorTool() {
           {/* P7: trade remedies that survive USMCA */}
           <div className="mt-6 rounded-lg border border-white/10 bg-white/[0.02] p-5">
             <div className="flex items-center justify-between gap-3">
-              <span className="text-[13px] font-medium uppercase tracking-[0.08em] text-paper/50">Trade remedies check</span>
+              <span className="text-[13px] font-medium uppercase tracking-[0.08em] text-paper/50">{t.remediesTitle}</span>
               {remedyFlags.length === 0 && componentRemedyFlags.length === 0 && (
-                <span className="text-[12px] font-medium text-pass">No 232/301 flags detected</span>
+                <span className="text-[12px] font-medium text-pass">{t.noRemedyFlags}</span>
               )}
             </div>
             <p className="mt-2 text-[12px] leading-relaxed text-paper/55">
-              USMCA only waives the MFN duty. Section 232 and 301 measures and AD/CVD orders are separate regimes - qualifying under USMCA does not exempt you from them.
+              {t.remediesBlurb}
             </p>
             {remedyFlags.map((f, i) => (
               <div
                 key={i}
                 className={"mt-3 rounded-lg border px-3 py-2 " + (f.severity === "critical" ? "border-fail/40 bg-fail/[0.05]" : f.severity === "warning" ? "border-seal/40 bg-seal/[0.05]" : "border-white/10 bg-white/[0.02]")}
               >
-                <p className={"text-[13px] font-semibold " + (f.severity === "critical" ? "text-fail" : f.severity === "warning" ? "text-seal" : "text-paper/75")}>{f.label}</p>
-                <p className="mt-1 text-[12px] leading-relaxed text-paper/60">{f.text}</p>
+                <p className={"text-[13px] font-semibold " + (f.severity === "critical" ? "text-fail" : f.severity === "warning" ? "text-seal" : "text-paper/75")}>{T(f.label)}</p>
+                <p className="mt-1 text-[12px] leading-relaxed text-paper/60">{T(f.text)}</p>
               </div>
             ))}
             {componentRemedyFlags.length > 0 && (
               <div className="mt-3 text-[12px] leading-relaxed text-paper/50">
-                <p className="font-medium text-paper/60">Flagged inputs (informational):</p>
+                <p className="font-medium text-paper/60">{t.flaggedInputs}</p>
                 {componentRemedyFlags.map((c) => (
-                  <p key={c.id} className="mt-1">{c.description + " - " + c.flag.short + ". Section 232 applies on the classification of the finished good at import, not on components directly."}</p>
+                  <p key={c.id} className="mt-1">{c.description + " - " + T(c.flag.short) + " " + t.remedyComponentNote}</p>
                 ))}
               </div>
             )}
             {remedyFlags.length === 0 && componentRemedyFlags.length === 0 && (
               <p className="mt-3 text-[12px] leading-relaxed text-paper/45">
-                No steel or aluminum chapter detected and no China-origin flag on the finished good. This does not clear Section 232 derivative-article lists or country-specific AD/CVD orders - confirm your 10-digit HTS with your broker.
+                {t.noRemedyDetected}
               </p>
             )}
           </div>
@@ -877,53 +880,53 @@ export default function CalculatorTool() {
           {engineering && (
             <div className="mt-6 rounded-lg border border-white/10 bg-white/[0.02] p-5">
               <div className="flex items-center justify-between gap-3">
-                <span className="text-[13px] font-medium uppercase tracking-[0.08em] text-paper/50">Origin engineering</span>
+                <span className="text-[13px] font-medium uppercase tracking-[0.08em] text-paper/50">{t.engineeringTitle}</span>
                 {engineering.mode === "fix-it" ? (
                   <span className="text-sm font-semibold text-fail">
-                    {"$" + (engineering.dollarGap ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 }) + " short of qualifying"}
+                    {"$" + (engineering.dollarGap ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 }) + " " + t.shortOfQualifying}
                   </span>
                 ) : (
                   <span className="text-sm font-semibold text-pass">
-                    {"$" + (engineering.headroomValue ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 }) + " of headroom"}
+                    {"$" + (engineering.headroomValue ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 }) + " " + t.ofHeadroom}
                   </span>
                 )}
               </div>
               {engineering.mode === "fix-it" ? (
                 <div className="mt-2">
                   <p className="text-[12px] leading-relaxed text-paper/55">
-                    {"You need about $" + (engineering.dollarGap ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 }) + " more originating content. Each single-component swap below closes the gap on its own, cheapest first:"}
+                    {t.needMoreContent((engineering.dollarGap ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 }))}
                   </p>
                   {engineering.cheapestQualifyingSwaps.length > 0 ? (
                     <ul className="mt-3 space-y-2">
                       {engineering.cheapestQualifyingSwaps.slice(0, 5).map((c) => (
                         <li key={c.id} className="rounded-lg border border-pass/25 bg-pass/[0.05] px-3 py-2 text-[13px]">
                           <span className="font-medium text-paper">{c.description}</span>
-                          <span className="text-paper/55">{" - swap for a USMCA-originating source ($" + c.value.toLocaleString("en-US") + ") and RVC goes to "}</span>
+                          <span className="text-paper/55">{t.swapForSource(c.value.toLocaleString("en-US"))}</span>
                           <span className="font-semibold text-pass">{c.newRvcPercent + "%"}</span>
                         </li>
                       ))}
                     </ul>
                   ) : (
-                    <p className="mt-3 text-[13px] text-paper/55">No single swap closes the gap - it will take a combination, or Article 4.12 de minimis if the failing inputs are small.</p>
+                    <p className="mt-3 text-[13px] text-paper/55">{t.noSingleSwap}</p>
                   )}
                 </div>
               ) : (
                 <div className="mt-2">
                   <p className="text-[12px] leading-relaxed text-paper/55">
-                    {"Qualifying with " + result.marginPercent.toFixed(1) + " points of margin. You could add up to about $" + (engineering.headroomValue ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 }) + " of non-originating content before dropping below the threshold. Biggest single-point risk:"}
+                    {t.qualifyingWithMargin(result.marginPercent.toFixed(1), (engineering.headroomValue ?? 0).toLocaleString("en-US", { maximumFractionDigits: 0 }))}
                   </p>
                   {engineering.swapCandidates.length > 0 && (
                     <p className="mt-2 text-[13px] text-paper/60">
-                      {engineering.swapCandidates[0].description + " (" + engineering.swapCandidates[0].rvcGainPercent.toFixed(1) + " points if swapped)"}
+                      {engineering.swapCandidates[0].description + " (" + engineering.swapCandidates[0].rvcGainPercent.toFixed(1) + " " + t.pointsIfSwapped + ")"}
                     </p>
                   )}
                 </div>
               )}
               <details className="mt-3 text-[12px] text-paper/50">
-                <summary className="cursor-pointer text-paper/60">Method and caveats</summary>
+                <summary className="cursor-pointer text-paper/60">{t.methodCaveats}</summary>
                 <ul className="mt-2 list-disc space-y-1.5 pl-4">
                   {engineering.notes.map((n, i) => (
-                    <li key={i} className="leading-relaxed">{n}</li>
+                    <li key={i} className="leading-relaxed">{T(n)}</li>
                   ))}
                 </ul>
               </details>
@@ -932,10 +935,9 @@ export default function CalculatorTool() {
 
           {!licensed && result.qualifies && (
             <p className="mt-6 text-[13px] leading-relaxed text-paper/60 bg-seal/[0.06] border border-seal/20 rounded-lg px-4 py-3">
-              This one qualifies — a license gets you the signed-ready certificate for it, plus unlimited
-              checks as your sourcing changes.{" "}
-              <a href="/pricing" className="text-seal font-medium hover:text-seal/80 transition-colors">
-                See pricing →
+              {t.qualifiesUpsell}{" "}
+              <a href={locale === "es" ? "/es/pricing" : "/pricing"} className="text-seal font-medium hover:text-seal/80 transition-colors">
+                {t.seePricing} →
               </a>
             </p>
           )}
@@ -945,14 +947,14 @@ export default function CalculatorTool() {
               onClick={handleDownloadWorksheet}
               className="rounded-full border border-white/20 px-6 py-2.5 text-sm text-paper/80 hover:border-seal/60 hover:text-paper transition-colors"
             >
-              Download worksheet (PDF)
+              {t.downloadWorksheet}
             </button>
             {licensed && (
               <button
                 onClick={handleDownloadBrokerPackage}
                 className="rounded-full border border-white/20 px-6 py-2.5 text-sm text-paper/80 hover:border-seal/60 hover:text-paper transition-colors"
               >
-                Download broker review package (PDF)
+                {t.downloadBrokerPackage}
               </button>
             )}
             {licensed && (
@@ -960,7 +962,7 @@ export default function CalculatorTool() {
                 onClick={handleSaveToVault}
                 className="rounded-full border border-white/20 px-6 py-2.5 text-sm text-paper/80 hover:border-seal/60 hover:text-paper transition-colors"
               >
-                Save to record vault
+                {t.saveToVault}
               </button>
             )}
             {licensed && (
@@ -969,7 +971,7 @@ export default function CalculatorTool() {
                 disabled={watching}
                 className="rounded-full border border-white/20 px-6 py-2.5 text-sm text-paper/80 hover:border-seal/60 hover:text-paper transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {watching ? "Watching for rule changes" : "Watch for rule changes"}
+                {watching ? t.watchingRules : t.watchRules}
               </button>
             )}
             {!showCert ? (
@@ -978,14 +980,14 @@ export default function CalculatorTool() {
                   onClick={() => setShowCert(true)}
                   className="rounded-full border border-white/20 px-6 py-2.5 text-sm text-paper/80 hover:border-seal/60 hover:text-paper transition-colors"
                 >
-                  Prepare draft certificate
+                  {t.prepareCert}
                 </button>
               ) : (
                 <a
-                  href="/pricing"
+                  href={locale === "es" ? "/es/pricing" : "/pricing"}
                   className="rounded-full bg-seal text-ink px-6 py-2.5 text-sm font-semibold hover:bg-seal/90 transition-colors"
                 >
-                  Unlock the certificate →
+                  {t.unlockCert} →
                 </a>
               )
             ) : null}
@@ -999,15 +1001,15 @@ export default function CalculatorTool() {
           )}
 
           <div className="mt-4 rounded-lg border border-white/10 bg-white/[0.02] p-4 text-[13px] leading-relaxed text-paper/55">
-            <span className="font-medium text-paper/75">Want a licensed customs broker to review this qualification?</span>{" "}
-            OrigynLX assembles the evidence package; a licensed broker can review it.{" "}
-            <a href="/contact" className="font-medium text-seal hover:text-seal/80 transition-colors">Ask us for a broker referral</a>{" "}
-            - flat review fee, no obligation.
+            <span className="font-medium text-paper/75">{t.brokerBoxTitle}</span>{" "}
+            {t.brokerBoxBody}{" "}
+            <a href={locale === "es" ? "/es/contact" : "/contact"} className="font-medium text-seal hover:text-seal/80 transition-colors">{t.brokerReferral}</a>{" "}
+            {t.brokerBoxTail}
           </div>
 
           {showCert && (
             <div className="mt-4">
-              <CertificateForm certInfo={certInfo} setCertInfo={setCertInfo} onDownload={handleDownloadCertificate} />
+              <CertificateForm certInfo={certInfo} setCertInfo={setCertInfo} onDownload={handleDownloadCertificate} locale={locale} />
             </div>
           )}
         </div>
@@ -1020,11 +1022,14 @@ function CertificateForm({
   certInfo,
   setCertInfo,
   onDownload,
+  locale = "en",
 }: {
   certInfo: CertifierInfo;
   setCertInfo: (c: CertifierInfo) => void;
   onDownload: () => void;
+  locale?: "en" | "es";
 }) {
+  const t = CALC_COPY[locale];
   function set<K extends keyof CertifierInfo>(key: K, value: CertifierInfo[K]) {
     setCertInfo({ ...certInfo, [key]: value });
   }
@@ -1032,7 +1037,7 @@ function CertificateForm({
   return (
     <div className="space-y-4 rounded-lg border border-white/10 bg-white/[0.02] p-5">
       <p className="text-[13px] text-paper/50">
-        These fields fill the nine required certificate elements. You'll still sign it yourself.
+        {t.certIntro}
       </p>
       <div className="grid gap-3 sm:grid-cols-2">
         <select
@@ -1044,22 +1049,22 @@ function CertificateForm({
           <option>Exporter</option>
           <option>Importer</option>
         </select>
-        <input placeholder="Certifier name" value={certInfo.certifierName} onChange={(e) => set("certifierName", e.target.value)} className="rounded-lg border border-white/15 bg-white/[0.02] px-3 py-2 text-sm text-paper outline-none focus:border-seal/60" />
-        <input placeholder="Certifier address" value={certInfo.certifierAddress} onChange={(e) => set("certifierAddress", e.target.value)} className="sm:col-span-2 rounded-lg border border-white/15 bg-white/[0.02] px-3 py-2 text-sm text-paper outline-none focus:border-seal/60" />
-        <input placeholder="Certifier email" value={certInfo.certifierEmail} onChange={(e) => set("certifierEmail", e.target.value)} className="rounded-lg border border-white/15 bg-white/[0.02] px-3 py-2 text-sm text-paper outline-none focus:border-seal/60" />
-        <input placeholder="Certifier phone" value={certInfo.certifierPhone} onChange={(e) => set("certifierPhone", e.target.value)} className="rounded-lg border border-white/15 bg-white/[0.02] px-3 py-2 text-sm text-paper outline-none focus:border-seal/60" />
-        <input placeholder="Producer name (if different)" value={certInfo.producerName} onChange={(e) => set("producerName", e.target.value)} className="rounded-lg border border-white/15 bg-white/[0.02] px-3 py-2 text-sm text-paper outline-none focus:border-seal/60" />
-        <input placeholder="Producer address" value={certInfo.producerAddress} onChange={(e) => set("producerAddress", e.target.value)} className="rounded-lg border border-white/15 bg-white/[0.02] px-3 py-2 text-sm text-paper outline-none focus:border-seal/60" />
-        <input placeholder="Importer name" value={certInfo.importerName} onChange={(e) => set("importerName", e.target.value)} className="rounded-lg border border-white/15 bg-white/[0.02] px-3 py-2 text-sm text-paper outline-none focus:border-seal/60" />
-        <input placeholder="Importer address" value={certInfo.importerAddress} onChange={(e) => set("importerAddress", e.target.value)} className="rounded-lg border border-white/15 bg-white/[0.02] px-3 py-2 text-sm text-paper outline-none focus:border-seal/60" />
-        <input placeholder="Blanket period start (YYYY-MM-DD)" value={certInfo.blanketPeriodStart} onChange={(e) => set("blanketPeriodStart", e.target.value)} className="rounded-lg border border-white/15 bg-white/[0.02] px-3 py-2 text-sm text-paper outline-none focus:border-seal/60" />
-        <input placeholder="Blanket period end (YYYY-MM-DD)" value={certInfo.blanketPeriodEnd} onChange={(e) => set("blanketPeriodEnd", e.target.value)} className="rounded-lg border border-white/15 bg-white/[0.02] px-3 py-2 text-sm text-paper outline-none focus:border-seal/60" />
+        <input placeholder={t.phCertifierName} value={certInfo.certifierName} onChange={(e) => set("certifierName", e.target.value)} className="rounded-lg border border-white/15 bg-white/[0.02] px-3 py-2 text-sm text-paper outline-none focus:border-seal/60" />
+        <input placeholder={t.phCertifierAddress} value={certInfo.certifierAddress} onChange={(e) => set("certifierAddress", e.target.value)} className="sm:col-span-2 rounded-lg border border-white/15 bg-white/[0.02] px-3 py-2 text-sm text-paper outline-none focus:border-seal/60" />
+        <input placeholder={t.phCertifierEmail} value={certInfo.certifierEmail} onChange={(e) => set("certifierEmail", e.target.value)} className="rounded-lg border border-white/15 bg-white/[0.02] px-3 py-2 text-sm text-paper outline-none focus:border-seal/60" />
+        <input placeholder={t.phCertifierPhone} value={certInfo.certifierPhone} onChange={(e) => set("certifierPhone", e.target.value)} className="rounded-lg border border-white/15 bg-white/[0.02] px-3 py-2 text-sm text-paper outline-none focus:border-seal/60" />
+        <input placeholder={t.phProducerName} value={certInfo.producerName} onChange={(e) => set("producerName", e.target.value)} className="rounded-lg border border-white/15 bg-white/[0.02] px-3 py-2 text-sm text-paper outline-none focus:border-seal/60" />
+        <input placeholder={t.phProducerAddress} value={certInfo.producerAddress} onChange={(e) => set("producerAddress", e.target.value)} className="rounded-lg border border-white/15 bg-white/[0.02] px-3 py-2 text-sm text-paper outline-none focus:border-seal/60" />
+        <input placeholder={t.phImporterName} value={certInfo.importerName} onChange={(e) => set("importerName", e.target.value)} className="rounded-lg border border-white/15 bg-white/[0.02] px-3 py-2 text-sm text-paper outline-none focus:border-seal/60" />
+        <input placeholder={t.phImporterAddress} value={certInfo.importerAddress} onChange={(e) => set("importerAddress", e.target.value)} className="rounded-lg border border-white/15 bg-white/[0.02] px-3 py-2 text-sm text-paper outline-none focus:border-seal/60" />
+        <input placeholder={t.phBlanketStart} value={certInfo.blanketPeriodStart} onChange={(e) => set("blanketPeriodStart", e.target.value)} className="rounded-lg border border-white/15 bg-white/[0.02] px-3 py-2 text-sm text-paper outline-none focus:border-seal/60" />
+        <input placeholder={t.phBlanketEnd} value={certInfo.blanketPeriodEnd} onChange={(e) => set("blanketPeriodEnd", e.target.value)} className="rounded-lg border border-white/15 bg-white/[0.02] px-3 py-2 text-sm text-paper outline-none focus:border-seal/60" />
       </div>
       <button
         onClick={onDownload}
         className="rounded-full bg-seal text-ink text-sm font-semibold px-6 h-11 hover:bg-seal/90 transition-colors"
       >
-        Download draft certificate (PDF)
+        {t.downloadCert}
       </button>
     </div>
   );

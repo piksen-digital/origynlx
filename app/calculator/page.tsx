@@ -1,6 +1,14 @@
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
 import CalculatorTool from "@/components/CalculatorTool";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "USMCA Qualification Calculator: Free RVC Check by HS Code | OrigynLX",
+  description:
+    "Run your bill of materials against the exact USMCA rule of origin for your HS code. Free RVC calculator with product-specific rules, de minimis and draft Certificates of Origin. 25 free checks a month, no signup.",
+  alternates: { canonical: "/calculator", languages: { "en": "/calculator", "es": "/es/calculator" } },
+};
 
 export default function CalculatorPage() {
   return (

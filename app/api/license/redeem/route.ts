@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   createResumeCookieToken,
+  ensureDevLicense,
   getLicenseByKey,
   RESUME_COOKIE_NAME,
   resumeCookieOptions,
@@ -13,7 +14,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ valid: false, error: "Enter a license key." }, { status: 400 });
     }
 
-    const record = await getLicenseByKey(licenseKey.trim().toUpperCase());
+    const submitted = licenseKey.trim().toUpperCase();
+    const devKey = (process.env.DEV_LICENSE_KEY || "").trim().toUpperCase();
+    if (devKey && submitted === devKey) {
+      // Developer license: mint the backing record so redeem, restore and
+      // every license-gated flow treat it like a normal purchase.
+      await ensureDevLicense(submitted);
+    }
+    const record = await getLicenseByKey(submitted);
     if (!record || record.status !== "active") {
       return NextResponse.json({ valid: false, error: "That license key isn't active." }, { status: 404 });
     }

@@ -200,6 +200,37 @@ export async function getLicenseByKey(licenseKey: string): Promise<LicenseRecord
   return getLicenseByReference(merchantReference);
 }
 
+/* ---------------------------------------------------------------
+ * Developer license.
+ *
+ * Set DEV_LICENSE_KEY in the environment to mint one key that always
+ * redeems as an active license with a far-future expiry - for ongoing
+ * testing and maintenance after payments go live. The backing record
+ * is written idempotently, so the restore-cookie path, the vault and
+ * every license-gated flow treat it exactly like a normal purchase.
+ * Rotate or remove the env var to revoke it.
+ * ------------------------------------------------------------- */
+
+const DEV_LICENSE_MERCHANT_REFERENCE = "olx_dev_license";
+
+export async function ensureDevLicense(devKey: string): Promise<void> {
+  const now = new Date();
+  const expires = new Date(now);
+  expires.setFullYear(expires.getFullYear() + 100);
+  const record: LicenseRecord = {
+    merchantReference: DEV_LICENSE_MERCHANT_REFERENCE,
+    status: "active",
+    amount: 0,
+    currencyCode: "USD",
+    licenseKey: devKey,
+    createdAt: now.toISOString(),
+    activatedAt: now.toISOString(),
+    expiresAt: expires.toISOString(),
+  };
+  await kv.set(keyFor(DEV_LICENSE_MERCHANT_REFERENCE), record);
+  await kv.set(`licensekey:${devKey}`, DEV_LICENSE_MERCHANT_REFERENCE);
+}
+
 /**
  * Every active license key, for the renewal-reminder cron. Fine at this
  * scale (KEYS/SCAN over a few hundred-thousand keys is cheap); revisit if

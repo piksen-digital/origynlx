@@ -1,5 +1,16 @@
+import type { Metadata } from "next";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
+
+export const metadata: Metadata = {
+  title: "Terms of Use | OrigynLX",
+  description:
+    "Terms of use for OrigynLX: the service, license keys, payment processing via Pesepay, no-warranty position, and how these terms change as USMCA rules evolve.",
+  alternates: {
+    canonical: "/legal/terms",
+    languages: { "en": "/legal/terms", "es": "/es/legal/terms", "x-default": "/legal/terms" },
+  },
+};
 
 export default function TermsPage() {
   return (

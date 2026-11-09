@@ -35,7 +35,7 @@ export default function PositioningSection({ locale = "en" }: { locale?: "en" | 
             </p>
             <p className="mt-4 text-[13px] leading-relaxed text-paper/45">
               {t.note1}{" "}
-              <a href="/legal/disclaimer" className="underline hover:text-paper/70 transition-colors">
+              <a href={locale === "es" ? "/es/legal/disclaimer" : "/legal/disclaimer"} className="underline hover:text-paper/70 transition-colors">
                 {t.link}
               </a>
               {t.note2}

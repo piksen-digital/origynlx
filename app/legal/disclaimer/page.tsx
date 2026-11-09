@@ -1,5 +1,16 @@
+import type { Metadata } from "next";
 import Nav from "@/components/Nav";
 import Footer from "@/components/Footer";
+
+export const metadata: Metadata = {
+  title: "Disclaimer | OrigynLX",
+  description:
+    "OrigynLX is a pre-screening and document-preparation tool. Results are estimates for internal use only; the importer, exporter, or producer remains the certifying party and bears responsibility for the origin claim.",
+  alternates: {
+    canonical: "/legal/disclaimer",
+    languages: { "en": "/legal/disclaimer", "es": "/es/legal/disclaimer", "x-default": "/legal/disclaimer" },
+  },
+};
 
 export default function DisclaimerPage() {
   return (

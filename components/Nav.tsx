@@ -46,6 +46,8 @@ const LOCALE_PATH_MAP: Record<string, string> = {
   "/contact": "/es/contact",
   "/refund": "/es/refund",
   "/guides/how-to-qualify-a-product-for-usmca": "/es/guides/como-calificar-un-producto-para-el-usmca",
+  "/legal/disclaimer": "/es/legal/disclaimer",
+  "/legal/terms": "/es/legal/terms",
 };
 
 function langSwitchHref(locale: "en" | "es", pathname: string): string {

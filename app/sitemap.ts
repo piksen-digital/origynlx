@@ -26,6 +26,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: "/es/vault", priority: 0.6, changeFrequency: "monthly" },
     { path: "/legal/disclaimer", priority: 0.3, changeFrequency: "yearly" },
     { path: "/legal/terms", priority: 0.3, changeFrequency: "yearly" },
+    { path: "/es/legal/disclaimer", priority: 0.3, changeFrequency: "yearly" },
+    { path: "/es/legal/terms", priority: 0.3, changeFrequency: "yearly" },
   ];
   return routes.map((r) => ({
     url: BASE + r.path,

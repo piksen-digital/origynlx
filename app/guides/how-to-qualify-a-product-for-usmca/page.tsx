@@ -130,16 +130,17 @@ const FAQS: { q: string; a: string }[] = [
   },
 ];
 
+const SITE = process.env.NEXT_PUBLIC_SITE_URL || "https://origynlx.vercel.app";
 const articleSchema = {
   "@context": "https://schema.org",
   "@type": "Article",
   headline: "How to Qualify a Product for USMCA Preferential Treatment",
   description:
     "A step-by-step guide to USMCA qualification: HS classification, product-specific rules of origin, Regional Value Content with a worked example, de minimis, and the nine certification data elements.",
-  author: { "@type": "Organization", name: "OrigynLX", url: "https://origynlx.vercel.app" },
-  publisher: { "@type": "Organization", name: "OrigynLX", url: "https://origynlx.vercel.app" },
+  author: { "@type": "Organization", name: "OrigynLX", url: SITE },
+  publisher: { "@type": "Organization", name: "OrigynLX", url: SITE },
   datePublished: "2026-11-08",
-  mainEntityOfPage: "https://origynlx.vercel.app/guides/how-to-qualify-a-product-for-usmca",
+  mainEntityOfPage: SITE + "/guides/how-to-qualify-a-product-for-usmca",
 };
 
 const faqSchema = {

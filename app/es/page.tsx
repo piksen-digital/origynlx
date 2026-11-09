@@ -193,7 +193,7 @@ const appSchema = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   name: "OrigynLX",
-  url: "https://origynlx.vercel.app",
+  url: process.env.NEXT_PUBLIC_SITE_URL || "https://origynlx.vercel.app",
   applicationCategory: "BusinessApplication",
   operatingSystem: "Web browser",
   description:

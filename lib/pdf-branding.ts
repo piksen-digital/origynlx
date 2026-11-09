@@ -171,7 +171,7 @@ export function drawFooters(ctx: PdfCtx): void {
     page.drawText(disclaimer3, { x: MARGIN, y: 20, size: 6.5, font: ctx.fonts.regular, color: BRAND.gray });
     const label = "Page " + String(idx + 1) + " of " + String(total);
     page.drawText(label, { x: PAGE_W - MARGIN - ctx.fonts.regular.widthOfTextAtSize(label, 7), y: 38, size: 7, font: ctx.fonts.regular, color: BRAND.gray });
-    const brand = "origynlx.vercel.app";
+    const brand = (process.env.NEXT_PUBLIC_SITE_URL || "https://origynlx.vercel.app").replace("https://", "");
     page.drawText(brand, { x: PAGE_W - MARGIN - ctx.fonts.regular.widthOfTextAtSize(brand, 7), y: 27, size: 7, font: ctx.fonts.regular, color: BRAND.goldDim });
   });
 }

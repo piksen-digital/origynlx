@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     title: "USMCA Qualification Calculator 2026: Free RVC and Rules of Origin Tool | OrigynLX",
     description:
       "Run your BOM against the exact USMCA rule of origin for your HS code and see whether your product qualifies for preferential treatment. Draft certificates, audit worksheets, batch screening. 25 free checks a month, no signup.",
-    url: "https://origynlx.vercel.app",
+    url: process.env.NEXT_PUBLIC_SITE_URL || "https://origynlx.vercel.app",
     siteName: "OrigynLX",
     type: "website",
   },
@@ -202,7 +202,7 @@ const appSchema = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   name: "OrigynLX",
-  url: "https://origynlx.vercel.app",
+  url: process.env.NEXT_PUBLIC_SITE_URL || "https://origynlx.vercel.app",
   applicationCategory: "BusinessApplication",
   operatingSystem: "Web browser",
   description:

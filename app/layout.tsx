@@ -32,6 +32,7 @@ const fontMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://origynlx.vercel.app"),
   title: "OrigynLX — USMCA Rules-of-Origin Qualifier",
   description:
     "Check Regional Value Content against USMCA thresholds and generate a draft Certificate of Origin in minutes. A pre-screening and document-preparation tool, not a legal certification service.",

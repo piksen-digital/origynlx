@@ -213,6 +213,14 @@ const appSchema = {
     ],
 };
 
+
+const orgSchema = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "OrigynLX",
+  url: process.env.NEXT_PUBLIC_SITE_URL || "https://origynlx.vercel.app",
+  logo: (process.env.NEXT_PUBLIC_SITE_URL || "https://origynlx.vercel.app") + "/icon.svg",
+};
 export default function Page() {
   return (
     <>
@@ -403,6 +411,7 @@ export default function Page() {
 
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(appSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqSchema) }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(orgSchema) }} />
     </>
   );
 }

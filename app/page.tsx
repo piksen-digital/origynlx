@@ -6,6 +6,7 @@ import ProcessSteps from "@/components/ProcessSteps";
 import PositioningSection from "@/components/PositioningSection";
 import PricingCard from "@/components/PricingCard";
 import Footer from "@/components/Footer";
+import logoPng from "./logo.png";
 
 export const metadata: Metadata = {
   title: "USMCA Qualification Calculator 2026: Free RVC and Rules of Origin Tool | OrigynLX",
@@ -219,7 +220,8 @@ const orgSchema = {
   "@type": "Organization",
   name: "OrigynLX",
   url: process.env.NEXT_PUBLIC_SITE_URL || "https://origynlx.vercel.app",
-  logo: (process.env.NEXT_PUBLIC_SITE_URL || "https://origynlx.vercel.app") + "/icon.svg",
+  sameAs: ["https://www.crunchbase.com/organization/origynlx"],
+  logo: logoPng.src,
 };
 export default function Page() {
   return (

@@ -220,7 +220,10 @@ const orgSchema = {
   "@type": "Organization",
   name: "OrigynLX",
   url: process.env.NEXT_PUBLIC_SITE_URL || "https://origynlx.vercel.app",
-  sameAs: ["https://www.crunchbase.com/organization/origynlx"],
+  sameAs: [
+    "https://www.crunchbase.com/organization/origynlx",
+    "https://www.linkedin.com/company/origynlx",
+  ],
   logo: logoPng.src,
 };
 export default function Page() {

@@ -223,6 +223,8 @@ const orgSchema = {
   sameAs: [
     "https://www.crunchbase.com/organization/origynlx",
     "https://www.linkedin.com/company/origynlx",
+    "https://www.trustpilot.com/review/origynlx.space",
+    "https://tradecompliance.software/software/origynlx",
   ],
   logo: logoPng.src,
 };

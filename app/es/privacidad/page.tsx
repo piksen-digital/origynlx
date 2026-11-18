@@ -67,7 +67,7 @@ export default function PrivacidadPage() {
               </p>
               <p>
                 <strong className="text-paper">Compras.</strong> Los pagos son procesados por
-                PayPal. Nosotros recibimos tu correo y la confirmación de pago necesaria para emits
+                PayPal. Nosotros recibimos tu correo y la confirmación de pago necesaria para emitir
                 tu licencia; PayPal maneja los datos de pago bajo su propia política de
                 privacidad.
               </p>

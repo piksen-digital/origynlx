@@ -1,6 +1,6 @@
-import Image from "next/image";
 import Link from "next/link";
 import GridOverlay from "./GridOverlay";
+import SampleCertificate from "./SampleCertificate";
 
 const COPY = {
   en: {
@@ -8,8 +8,8 @@ const COPY = {
     h1a: "Stop paying duty",
     h1b: "on goods that already ",
     h1c: "qualify.",
-    alt: "Cargo containers stacked at a port terminal at dusk",
     body: "Run your bill of materials through the exact USMCA rule of origin for your HS code: transaction-value or net-cost Regional Value Content math, product-specific thresholds, de minimis handling, Section 232 steel and aluminum flags, and a draft Certificate of Origin with a full audit trail. Minutes instead of weeks. Before you call a broker, not instead of one.",
+    sampleCaption: "A real draft certificate built from sample data - the tool fills this form from your BOM; you review it and sign it.",
     ctaPrimary: "Run 25 free checks",
     ctaSecondary: "Screen your whole catalog",
     stats: [
@@ -23,8 +23,8 @@ const COPY = {
     h1a: "Deja de pagar arancel",
     h1b: "por bienes que ya ",
     h1c: "califican.",
-    alt: "Contenedores de carga apilados en una terminal portuaria al atardecer",
     body: "Pasa tu lista de materiales por la regla de origen exacta del T-MEC para tu código HS: cálculo de Contenido de Valor Regional por valor de transacción o costo neto, umbrales específicos por producto, manejo de minimis, alertas de acero y aluminio de la Sección 232, y un Certificado de Origen en borrador con pista de auditoría completa. Minutos en lugar de semanas. Antes de llamar a un agente aduanal, no en lugar de uno.",
+    sampleCaption: "Certificado en borrador real con datos de ejemplo: la herramienta llena este formulario con tu lista de materiales; tú lo revisas y lo firmas.",
     ctaPrimary: "Haz 25 verificaciones gratis",
     ctaSecondary: "Revisa todo tu catálogo",
     stats: [
@@ -39,18 +39,11 @@ export default function Hero({ locale = "en" }: { locale?: "en" | "es" }) {
   const t = COPY[locale];
   return (
     <section className="relative min-h-[100svh] flex items-center overflow-hidden bg-ink">
-      <Image
-        src="https://images.unsplash.com/photo-1508404999913-79a3a2e75437?q=80&w=2400&auto=format&fit=crop"
-        alt={t.alt}
-        fill
-        priority
-        className="object-cover opacity-45"
-      />
-      <div className="absolute inset-0 bg-gradient-to-b from-ink/40 via-ink/70 to-ink" aria-hidden="true" />
+      <div className="absolute inset-0 bg-gradient-to-b from-ink/30 via-ink/60 to-ink" aria-hidden="true" />
       <GridOverlay className="opacity-20" />
 
       <div className="relative z-10 w-full max-w-content mx-auto px-5 sm:px-6 lg:px-12 pt-24 pb-12 sm:pt-28 sm:pb-16 lg:pt-36 lg:pb-24">
-        <div className="max-w-3xl">
+        <div className="max-w-3xl xl:max-w-2xl">
           <span className="inline-flex items-center gap-2.5 text-xs font-medium uppercase tracking-[0.08em] text-paper/55">
             {t.eyebrow}
           </span>
@@ -91,6 +84,13 @@ export default function Hero({ locale = "en" }: { locale?: "en" | "es" }) {
             </div>
           </div>
         </div>
+      </div>
+
+      <div className="absolute hidden xl:block right-10 2xl:right-16 bottom-14 w-[320px] [transform:rotate(1.25deg)]">
+        <div className="overflow-hidden rounded-sm shadow-2xl ring-1 ring-white/15">
+          <SampleCertificate />
+        </div>
+        <p className="mt-3 text-[11.5px] leading-snug text-paper/40">{t.sampleCaption}</p>
       </div>
     </section>
   );

@@ -28,6 +28,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: "/legal/terms", priority: 0.3, changeFrequency: "yearly" },
     { path: "/es/legal/disclaimer", priority: 0.3, changeFrequency: "yearly" },
     { path: "/es/legal/terms", priority: 0.3, changeFrequency: "yearly" },
+    { path: "/privacy", priority: 0.3, changeFrequency: "yearly" },
+    { path: "/es/privacidad", priority: 0.3, changeFrequency: "yearly" },
   ];
   return routes.map((r) => ({
     url: BASE + r.path,

@@ -16,7 +16,7 @@ const COPY = {
       { href: "/refund", label: "Refunds" },
       { href: "/contact", label: "Contact" },
     ],
-    ctaDefault: { label: "Start free trial", href: "/calculator" },
+    ctaDefault: { label: "Start for free", href: "/calculator" },
     ctaOpen: { label: "Open calculator", href: "/calculator" },
     ctaUpgrade: { label: "Upgrade", href: "/pricing" },
     langSwitch: { label: "ES" },
@@ -30,7 +30,7 @@ const COPY = {
       { href: "/es/refund", label: "Reembolsos" },
       { href: "/es/contact", label: "Contacto" },
     ],
-    ctaDefault: { label: "Prueba gratis", href: "/es/calculator" },
+    ctaDefault: { label: "Empieza gratis", href: "/es/calculator" },
     ctaOpen: { label: "Abrir calculadora", href: "/es/calculator" },
     ctaUpgrade: { label: "Mejorar plan", href: "/es/pricing" },
     langSwitch: { label: "EN" },
@@ -48,6 +48,7 @@ const LOCALE_PATH_MAP: Record<string, string> = {
   "/guides/how-to-qualify-a-product-for-usmca": "/es/guides/como-calificar-un-producto-para-el-usmca",
   "/legal/disclaimer": "/es/legal/disclaimer",
   "/legal/terms": "/es/legal/terms",
+  "/privacy": "/es/privacidad",
 };
 
 function langSwitchHref(locale: "en" | "es", pathname: string): string {

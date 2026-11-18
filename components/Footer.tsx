@@ -13,9 +13,10 @@ const COPY = {
     legal: "Legal",
     disclaimer: "Disclaimer",
     terms: "Terms",
+    privacy: "Privacy",
     rights: "All rights reserved.",
     infoOnly: "For informational use only. Not legal advice.",
-    hrefs: { calculator: "/calculator", pricing: "/pricing", guides: "/guides/how-to-qualify-a-product-for-usmca", contact: "/contact", disclaimer: "/legal/disclaimer", terms: "/legal/terms" },
+    hrefs: { calculator: "/calculator", pricing: "/pricing", guides: "/guides/how-to-qualify-a-product-for-usmca", contact: "/contact", disclaimer: "/legal/disclaimer", terms: "/legal/terms", privacy: "/privacy" },
   },
   es: {
     blurb:
@@ -28,9 +29,10 @@ const COPY = {
     legal: "Legal",
     disclaimer: "Aviso legal",
     terms: "Términos",
+    privacy: "Privacidad",
     rights: "Todos los derechos reservados.",
     infoOnly: "Solo para uso informativo. No es asesoría legal.",
-    hrefs: { calculator: "/es/calculator", pricing: "/es/pricing", guides: "/es/guides/como-calificar-un-producto-para-el-usmca", contact: "/es/contact", disclaimer: "/es/legal/disclaimer", terms: "/es/legal/terms" },
+    hrefs: { calculator: "/es/calculator", pricing: "/es/pricing", guides: "/es/guides/como-calificar-un-producto-para-el-usmca", contact: "/es/contact", disclaimer: "/es/legal/disclaimer", terms: "/es/legal/terms", privacy: "/es/privacidad" },
   },
 };
 
@@ -60,6 +62,7 @@ export default function Footer({ locale = "en" }: { locale?: "en" | "es" }) {
             <ul className="mt-4 space-y-2.5">
               <li><Link href={t.hrefs.disclaimer} className="text-sm text-paper/70 hover:text-paper transition-colors">{t.disclaimer}</Link></li>
               <li><Link href={t.hrefs.terms} className="text-sm text-paper/70 hover:text-paper transition-colors">{t.terms}</Link></li>
+              <li><Link href={t.hrefs.privacy} className="text-sm text-paper/70 hover:text-paper transition-colors">{t.privacy}</Link></li>
             </ul>
           </div>
         </div>

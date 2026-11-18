@@ -5,7 +5,7 @@ import Footer from "@/components/Footer";
 export const metadata: Metadata = {
   title: "Terms of Use | OrigynLX",
   description:
-    "Terms of use for OrigynLX: the service, license keys, payment processing via Pesepay, no-warranty position, and how these terms change as USMCA rules evolve.",
+    "Terms of use for OrigynLX: the service, license keys, payment processing via PayPal, no-warranty position, and how these terms change as USMCA rules evolve.",
   alternates: {
     canonical: "/legal/terms",
     languages: { "en": "/legal/terms", "es": "/es/legal/terms", "x-default": "/legal/terms" },
@@ -49,9 +49,12 @@ export default function TermsPage() {
 
               <h2 className="pt-4 font-display text-xl text-paper">Payment</h2>
               <p>
-                Payments are processed by Pesepay, a third-party payment provider. We don't store
-                your card details. Refund requests can be sent through the contact page and are
-                handled case by case.
+                Payments are processed by PayPal, a third-party payment provider. We don't
+                store your card details. Refund requests can be sent through the contact page and
+                are handled case by case. If you paid IEEPA duties that were later struck down,
+                our{" "}
+                <a href="/refund" className="underline hover:text-paper transition-colors">Refund Estimator</a>{" "}
+                can help you size the claim.
               </p>
 
               <h2 className="pt-4 font-display text-xl text-paper">No warranty</h2>

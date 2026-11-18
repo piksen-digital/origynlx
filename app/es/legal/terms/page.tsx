@@ -5,7 +5,7 @@ import Footer from "@/components/Footer";
 export const metadata: Metadata = {
   title: "Términos de uso | OrigynLX",
   description:
-    "Términos de uso de OrigynLX: el servicio, las claves de licencia, el pago procesado por Pesepay, la posición sin garantías y cómo cambian estos términos a medida que evolucionan las reglas del T-MEC.",
+    "Términos de uso de OrigynLX: el servicio, las claves de licencia, el pago procesado por PayPal, la posición sin garantías y cómo cambian estos términos a medida que evolucionan las reglas del T-MEC.",
   alternates: {
     canonical: "/es/legal/terms",
     languages: { "en": "/legal/terms", "es": "/es/legal/terms", "x-default": "/legal/terms" },
@@ -51,9 +51,12 @@ export default function TermsPageEs() {
 
               <h2 className="pt-4 font-display text-xl text-paper">Pago</h2>
               <p>
-                Los pagos son procesados por Pesepay, un proveedor de pagos de terceros. No
+                Los pagos son procesados por PayPal, un proveedor de pagos de terceros. No
                 almacenamos los datos de tu tarjeta. Las solicitudes de reembolso pueden enviarse
-                a través de la página de contacto y se gestionan caso por caso.
+                a través de la página de contacto y se gestionan caso por caso. Si pagaste
+                derechos IEEPA derogados después, nuestro{" "}
+                <a href="/es/refund" className="underline hover:text-paper transition-colors">Estimador de reembolsos</a>{" "}
+                puede ayudarte a dimensionar la reclamación.
               </p>
 
               <h2 className="pt-4 font-display text-xl text-paper">Sin garantía</h2>

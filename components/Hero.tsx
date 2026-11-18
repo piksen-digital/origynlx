@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import GridOverlay from "./GridOverlay";
 import SampleCertificate from "./SampleCertificate";
@@ -8,6 +9,7 @@ const COPY = {
     h1a: "Stop paying duty",
     h1b: "on goods that already ",
     h1c: "qualify.",
+    alt: "Aerial view of stacked shipping containers at a port",
     body: "Run your bill of materials through the exact USMCA rule of origin for your HS code: transaction-value or net-cost Regional Value Content math, product-specific thresholds, de minimis handling, Section 232 steel and aluminum flags, and a draft Certificate of Origin with a full audit trail. Minutes instead of weeks. Before you call a broker, not instead of one.",
     sampleCaption: "A real draft certificate built from sample data - the tool fills this form from your BOM; you review it and sign it.",
     ctaPrimary: "Run 25 free checks",
@@ -23,6 +25,7 @@ const COPY = {
     h1a: "Deja de pagar arancel",
     h1b: "por bienes que ya ",
     h1c: "califican.",
+    alt: "Vista aérea de contenedores apilados en un puerto",
     body: "Pasa tu lista de materiales por la regla de origen exacta del T-MEC para tu código HS: cálculo de Contenido de Valor Regional por valor de transacción o costo neto, umbrales específicos por producto, manejo de minimis, alertas de acero y aluminio de la Sección 232, y un Certificado de Origen en borrador con pista de auditoría completa. Minutos en lugar de semanas. Antes de llamar a un agente aduanal, no en lugar de uno.",
     sampleCaption: "Certificado en borrador real con datos de ejemplo: la herramienta llena este formulario con tu lista de materiales; tú lo revisas y lo firmas.",
     ctaPrimary: "Haz 25 verificaciones gratis",
@@ -39,7 +42,14 @@ export default function Hero({ locale = "en" }: { locale?: "en" | "es" }) {
   const t = COPY[locale];
   return (
     <section className="relative min-h-[100svh] flex items-center overflow-hidden bg-ink">
-      <div className="absolute inset-0 bg-gradient-to-b from-ink/30 via-ink/60 to-ink" aria-hidden="true" />
+      <Image
+        src="https://images.pexels.com/photos/13559095/pexels-photo-13559095.jpeg?auto=compress&cs=tinysrgb&w=2400"
+        alt={t.alt}
+        fill
+        priority
+        className="object-cover opacity-50"
+      />
+      <div className="absolute inset-0 bg-gradient-to-b from-ink/20 via-ink/50 to-ink" aria-hidden="true" />
       <GridOverlay className="opacity-20" />
 
       <div className="relative z-10 w-full max-w-content mx-auto px-5 sm:px-6 lg:px-12 pt-24 pb-12 sm:pt-28 sm:pb-16 lg:pt-36 lg:pb-24">

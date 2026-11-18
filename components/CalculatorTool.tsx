@@ -270,19 +270,19 @@ export default function CalculatorTool({ locale = "en" }: { locale?: "en" | "es"
   }
 
   async function handleDownloadCertificate() {
-    if (!result) return;
+    if (!result || result.canCalculate === false) return;
     const bytes = await generateCertificatePDF(productName || "Untitled product", lineItems, result, certInfo);
     downloadPdf(bytes, `${slug(productName || "origynlx-draft-certificate")}.pdf`);
   }
 
   async function handleDownloadWorksheet() {
-    if (!result) return;
+    if (!result || result.canCalculate === false) return;
     const bytes = await generateAuditWorksheetPDF(productName || "Untitled product", lineItems, result, deMinimis);
-    downloadPdf(bytes, `${slug(productName || "origynlx-worksheet")}-worksheet.pdf`);
+    downloadPdf(bytes, slug(productName || "untitled") + "-worksheet.pdf");
   }
 
   async function handleDownloadBrokerPackage() {
-    if (!result) return;
+    if (!result || result.canCalculate === false) return;
     const bytes = await generateBrokerPackagePDF({
       productName: productName || "Untitled product",
       hsSubheading,
@@ -296,7 +296,7 @@ export default function CalculatorTool({ locale = "en" }: { locale?: "en" | "es"
       savings,
       engineering,
     });
-    downloadPdf(bytes, (slug(productName || "origynlx-broker-package")) + "-broker-package.pdf");
+    downloadPdf(bytes, slug(productName || "untitled") + "-broker-package.pdf");
   }
 
   async function handleSaveToVault() {
@@ -736,10 +736,14 @@ export default function CalculatorTool({ locale = "en" }: { locale?: "en" | "es"
             </div>
             <span
               className={`rounded-full px-4 py-1.5 text-sm font-semibold ${
-                result.qualifies ? "bg-pass/15 text-pass" : "bg-fail/15 text-fail"
+                result.canCalculate === false
+                  ? "bg-white/10 text-paper/60"
+                  : result.qualifies
+                    ? "bg-pass/15 text-pass"
+                    : "bg-fail/15 text-fail"
               }`}
             >
-              {result.qualifies ? t.qualifies : t.doesNotQualify}
+              {result.canCalculate === false ? t.cannotCalculate : result.qualifies ? t.qualifies : t.doesNotQualify}
             </span>
           </div>
 
@@ -759,9 +763,13 @@ export default function CalculatorTool({ locale = "en" }: { locale?: "en" | "es"
                 <span className="text-[13px] font-medium uppercase tracking-[0.08em] text-paper/50">
                   {t.deminimisCheck}
                 </span>
-                <span className={`text-sm font-semibold ${deMinimis.withinDeMinimis ? "text-pass" : "text-fail"}`}>
-                  {deMinimis.nonOriginatingPercent}% {deMinimis.withinDeMinimis ? "— " + t.withinLimit : "— " + t.exceedsLimit}
-                </span>
+                {deMinimis.assessed === false ? (
+                  <span className="text-sm font-semibold text-paper/60">{t.deMinimisNotAssessed}</span>
+                ) : (
+                  <span className={`text-sm font-semibold ${deMinimis.withinDeMinimis ? "text-pass" : "text-fail"}`}>
+                    {deMinimis.nonOriginatingPercent}% {deMinimis.withinDeMinimis ? "— " + t.withinLimit : "— " + t.exceedsLimit}
+                  </span>
+                )}
               </div>
               <p className="mt-3 text-[13px] leading-relaxed text-paper/55">
                 {t.deminimisCheckNote}
@@ -945,14 +953,16 @@ export default function CalculatorTool({ locale = "en" }: { locale?: "en" | "es"
           <div className="mt-6 flex flex-wrap gap-3">
             <button
               onClick={handleDownloadWorksheet}
-              className="rounded-full border border-white/20 px-6 py-2.5 text-sm text-paper/80 hover:border-seal/60 hover:text-paper transition-colors"
+              disabled={result.canCalculate === false}
+              className="rounded-full border border-white/20 px-6 py-2.5 text-sm text-paper/80 hover:border-seal/60 hover:text-paper transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {t.downloadWorksheet}
             </button>
             {licensed && (
               <button
                 onClick={handleDownloadBrokerPackage}
-                className="rounded-full border border-white/20 px-6 py-2.5 text-sm text-paper/80 hover:border-seal/60 hover:text-paper transition-colors"
+                disabled={result.canCalculate === false}
+                className="rounded-full border border-white/20 px-6 py-2.5 text-sm text-paper/80 hover:border-seal/60 hover:text-paper transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
               >
                 {t.downloadBrokerPackage}
               </button>

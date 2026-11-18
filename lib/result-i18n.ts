@@ -15,6 +15,12 @@ const ES_RESULT_COPY: Record<string, string> = {
     "El costo neto es mayor que el valor de transacción: el costo neto excluye la utilidad, así que normalmente queda por debajo del precio de venta. Verifica qué cifra quedó en cada campo.",
   "Transaction value must be greater than zero.":
     "El valor de transacción debe ser mayor que cero.",
+  "Cannot calculate RVC: transaction value is zero or missing. Enter the adjusted transaction value of the good, or select the net-cost method and provide a net cost.":
+    "No se puede calcular el RVC: el valor de transacción es cero o falta. Ingresa el valor de transacción ajustado del bien, o selecciona el método de costo neto y proporciona un costo neto.",
+  "BOM line items total more than the transaction value - material costs should normally sit below the sale price, which also includes labor and margin. Double-check your BOM totals.":
+    "Las partidas de la lista de materiales suman más que el valor de transacción: los costos de materiales normalmente quedan por debajo del precio de venta, que también incluye mano de obra y margen. Revisa los totales de tu lista de materiales.",
+  "Transaction value is zero or missing - de minimis cannot be assessed with the figures entered.":
+    "El valor de transacción es cero o falta: el minimis no puede evaluarse con las cifras ingresadas.",
   "Line item values differ from transaction value by more than 2% - double check your BOM totals before relying on this result.":
     "Los valores de las partidas difieren del valor de transacción por más del 2%: revisa los totales de tu lista de materiales antes de confiar en este resultado.",
   "This result is within 3 percentage points of the threshold - a small sourcing change could flip the outcome. Consider a wider margin before certifying.":
@@ -110,6 +116,12 @@ const ES_REGEX_RULES: RegexRule[] = [
     es: (m) =>
       m[1] +
       " partidas no tienen código HS: es requerido para el certificado y para cualquier determinación de cambio de clasificación.",
+  },
+  {
+    re: /^(\d+) line item\(s\) are marked Undetermined - they are counted as non-originating in this result \(conservative\)\. Resolve their status before certifying\.$/,
+    es: (m) =>
+      m[1] +
+      " partidas están marcadas Sin determinar: se cuentan como no originarias en este resultado (criterio conservador). Resuelve su estatus antes de certificar.",
   },
   // batch review reasons (concatenated segments are split by ttBatch below)
   {

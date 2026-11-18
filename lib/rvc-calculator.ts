@@ -61,6 +61,15 @@ export interface RVCResult {
   thresholdPercent: number;
   qualifies: boolean;
   marginPercent: number; // how far above/below the threshold
+  /**
+   * False when the entered figures cannot support any RVC result (zero or
+   * missing transaction value on the transaction-value basis). Present a
+   * false canCalculate as "cannot calculate": no verdict, no percentage,
+   * and no PDF exports from this state.
+   */
+  canCalculate?: boolean;
+  /** Human-readable reason when canCalculate is false; undefined otherwise. */
+  invalidReason?: string | null;
   warnings: string[];
 }
 
@@ -91,11 +100,9 @@ export function calculateRVC(input: RVCInput): RVCResult {
   if (!usingNetCost) {
     if (input.transactionValue <= 0) {
       warnings.push("Transaction value must be greater than zero.");
-    }
-
-    if (Math.abs(lineItemTotal - input.transactionValue) / (input.transactionValue || 1) > 0.02) {
+    } else if (lineItemTotal > input.transactionValue * 1.02) {
       warnings.push(
-        "Line item values differ from transaction value by more than 2% - double check your BOM totals before relying on this result."
+        "BOM line items total more than the transaction value - material costs should normally sit below the sale price, which also includes labor and margin. Double-check your BOM totals."
       );
     }
   }
@@ -104,10 +111,24 @@ export function calculateRVC(input: RVCInput): RVCResult {
   const rvcPercent =
     denominator > 0 ? ((denominator - nonOriginatingValue) / denominator) * 100 : 0;
 
-  const qualifies = rvcPercent >= input.thresholdPercent;
-  const marginPercent = rvcPercent - input.thresholdPercent;
+  const canCalculate = usingNetCost ? true : input.transactionValue > 0;
+  const invalidReason = canCalculate
+    ? null
+    : "Cannot calculate RVC: transaction value is zero or missing. Enter the adjusted transaction value of the good, or select the net-cost method and provide a net cost.";
 
-  if (Math.abs(marginPercent) < 3) {
+  const qualifies = canCalculate && rvcPercent >= input.thresholdPercent;
+  const marginPercent = canCalculate ? rvcPercent - input.thresholdPercent : 0;
+
+  const undeterminedCount = input.lineItems.filter(
+    (item) => item.originStatus === "undetermined"
+  ).length;
+  if (undeterminedCount > 0) {
+    warnings.push(
+      undeterminedCount + " line item(s) are marked Undetermined - they are counted as non-originating in this result (conservative). Resolve their status before certifying."
+    );
+  }
+
+  if (canCalculate && Math.abs(marginPercent) < 3) {
     warnings.push(
       "This result is within 3 percentage points of the threshold - a small sourcing change could flip the outcome. Consider a wider margin before certifying."
     );
@@ -129,6 +150,8 @@ export function calculateRVC(input: RVCInput): RVCResult {
     rvcPercent: round2(rvcPercent),
     thresholdPercent: input.thresholdPercent,
     qualifies,
+    canCalculate,
+    invalidReason,
     marginPercent: round2(marginPercent),
     warnings,
   };
@@ -178,6 +201,8 @@ export interface DeMinimisResult {
   nonOriginatingValue: number;
   transactionValue: number;
   nonOriginatingPercent: number;
+  /** False when the transaction value is zero/missing - the check cannot run. */
+  assessed?: boolean;
   withinDeMinimis: boolean;
   thresholdPercent: number;
   notes: string[];
@@ -192,20 +217,25 @@ export function checkDeMinimis(input: {
     .reduce((sum, item) => sum + item.value, 0);
 
   const thresholdPercent = 10;
-  const nonOriginatingPercent =
-    input.transactionValue > 0 ? (nonOriginatingValue / input.transactionValue) * 100 : 0;
+  const assessed = input.transactionValue > 0;
+  const nonOriginatingPercent = assessed
+    ? (nonOriginatingValue / input.transactionValue) * 100
+    : 0;
 
   return {
     nonOriginatingValue,
     transactionValue: input.transactionValue,
     nonOriginatingPercent: round2(nonOriginatingPercent),
-    withinDeMinimis: nonOriginatingPercent <= thresholdPercent,
+    assessed,
+    withinDeMinimis: assessed ? nonOriginatingPercent <= thresholdPercent : false,
     thresholdPercent,
-    notes: [
+    notes: assessed
+      ? [
       "De minimis (USMCA Article 4.12) applies only to the non-originating materials that fail a required tariff-shift test - it doesn't raise your RVC threshold, and those materials still count as non-originating in the RVC result above.",
       "The treaty test is 10% of the transaction value (adjusted to exclude international shipment costs) or, where the net cost method applies, 10% of the total cost of the good - this check uses transaction value as a conservative reference.",
       "Textiles and apparel (HS chapters 50-63) use a different, weight-based de minimis test instead of this value-based one (10% of total weight, with elastomeric content capped at 7% of total weight).",
       "Certain dairy products and infant formula used as inputs are excluded from de minimis treatment entirely.",
-    ],
+    ]
+      : ["Transaction value is zero or missing - de minimis cannot be assessed with the figures entered."],
   };
 }

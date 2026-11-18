@@ -81,12 +81,16 @@ export async function generateCertificatePDF(
 
   heading(ctx, "6. Origin criterion");
   ensureSpace(ctx, 26, "OrigynLX");
-  statusBadge(ctx, result.qualifies);
-  ctx.page.drawText(
-    "Regional Value Content (" + (result.basis === "net-cost" ? "net cost" : "transaction value") + " method): " +
-      result.rvcPercent + "% vs " + result.thresholdPercent + "% threshold",
-    { x: MARGIN, y: ctx.y, size: 9.5, font: ctx.fonts.bold, color: BRAND.ink }
-  );
+  if (result.canCalculate === false) {
+    bodyText(ctx, "Not calculable from the entered figures: " + (result.invalidReason || "RVC cannot be computed."), { size: 9.5, color: BRAND.fail });
+  } else {
+    statusBadge(ctx, result.qualifies);
+    ctx.page.drawText(
+      "Regional Value Content (" + (result.basis === "net-cost" ? "net cost" : "transaction value") + " method): " +
+        result.rvcPercent + "% vs " + result.thresholdPercent + "% threshold",
+      { x: MARGIN, y: ctx.y, size: 9.5, font: ctx.fonts.bold, color: BRAND.ink }
+    );
+  }
   ctx.y -= 17;
   bodyText(ctx, "Origin criterion: satisfies the applicable product-specific rule of origin (USMCA Annex 4-B).", { size: 9, color: BRAND.gray });
   ctx.y -= 6;

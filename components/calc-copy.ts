@@ -109,9 +109,11 @@ const CALC_COPY_EN = {
   vsThreshold: (n: number) => "vs " + n + "% threshold",
   qualifies: "Qualifies",
   doesNotQualify: "Does not qualify",
+  cannotCalculate: "Cannot calculate",
   deminimisCheck: "De minimis reference check",
   withinLimit: "— within 10% reference limit",
   exceedsLimit: "— exceeds 10% reference limit",
+  deMinimisNotAssessed: "— not assessed: transaction value required",
   deminimisCheckNote:
     "This only matters if your product also needs a tariff-shift test and some inputs fail it — it does not change the RVC result above, and those materials still count as non-originating there.",
   worthTitle: "What is this worth?",
@@ -292,9 +294,11 @@ const CALC_COPY_ES: typeof CALC_COPY_EN = {
   vsThreshold: (n: number) => "contra el umbral de " + n + "%",
   qualifies: "Califica",
   doesNotQualify: "No califica",
+  cannotCalculate: "No se puede calcular",
   deminimisCheck: "Verificación de referencia de minimis",
   withinLimit: "dentro del límite de referencia del 10%",
   exceedsLimit: "excede el límite de referencia del 10%",
+  deMinimisNotAssessed: "no evaluado: falta el valor de transacción",
   deminimisCheckNote:
     "Esto solo importa si tu producto también necesita una prueba de cambio de clasificación y algunos insumos la fallan: no cambia el resultado de RVC de arriba, y esos materiales siguen contando como no originarios allí.",
   worthTitle: "¿Cuánto vale esto?",

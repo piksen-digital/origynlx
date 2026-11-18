@@ -19,15 +19,21 @@ export async function generateAuditWorksheetPDF(
   result: RVCResult,
   deMinimis: DeMinimisResult | null
 ): Promise<Uint8Array> {
+  const recordId = "OLX-" + Math.random().toString(36).slice(2, 10).toUpperCase();
   const ctx = await newBrandedDoc(
     "USMCA Qualification Worksheet",
-    "Internal audit record - generated " + new Date().toLocaleString("en-US")
+    "Internal audit record - " + recordId + " - generated " + new Date().toISOString().replace("T", " ").slice(0, 19) + " UTC"
   );
 
   bodyText(ctx, "Product: " + productName, { size: 12.5, font: ctx.fonts.bold });
   bodyText(
     ctx,
     "Method: " + (result.basis === "net-cost" ? "Net cost (Article 4.5(2))" : "Transaction value (Article 4.5(1))"),
+    { size: 9, color: BRAND.gray }
+  );
+  bodyText(
+    ctx,
+    "Threshold: " + result.thresholdPercent + "% (USMCA Annex 4-B RVC reference, selected in-app) - confirm the governing rule before relying on this result.",
     { size: 9, color: BRAND.gray }
   );
   ctx.y -= 4;
@@ -40,11 +46,15 @@ export async function generateAuditWorksheetPDF(
   keyLine(ctx, "Originating value", "$" + result.originatingValue.toLocaleString("en-US"));
   keyLine(ctx, "Non-originating value", "$" + result.nonOriginatingValue.toLocaleString("en-US"));
   ensureSpace(ctx, 26, "OrigynLX");
-  statusBadge(ctx, result.qualifies);
-  ctx.page.drawText(
-    "RVC result: " + result.rvcPercent + "%   vs   " + result.thresholdPercent + "% threshold",
-    { x: MARGIN, y: ctx.y, size: 11.5, font: ctx.fonts.bold, color: BRAND.ink }
-  );
+  if (result.canCalculate === false) {
+    bodyText(ctx, "CANNOT CALCULATE: " + (result.invalidReason || "the entered figures do not support an RVC result."), { size: 10.5, color: BRAND.fail });
+  } else {
+    statusBadge(ctx, result.qualifies);
+    ctx.page.drawText(
+      "RVC result: " + result.rvcPercent + "%   vs   " + result.thresholdPercent + "% threshold",
+      { x: MARGIN, y: ctx.y, size: 11.5, font: ctx.fonts.bold, color: BRAND.ink }
+    );
+  }
   ctx.y -= 17;
   bodyText(
     ctx,
@@ -57,7 +67,11 @@ export async function generateAuditWorksheetPDF(
     heading(ctx, "De minimis reference check (Article 4.12)");
     keyLine(ctx, "Non-originating value", "$" + deMinimis.nonOriginatingValue.toLocaleString("en-US"));
     keyLine(ctx, "As % of transaction value", deMinimis.nonOriginatingPercent + "% (reference limit " + deMinimis.thresholdPercent + "%)");
-    keyLine(ctx, "Within de minimis", deMinimis.withinDeMinimis ? "Yes - see notes" : "No");
+    keyLine(
+      ctx,
+      "Within de minimis",
+      deMinimis.assessed === false ? "Not assessed - transaction value required" : deMinimis.withinDeMinimis ? "Yes - see notes" : "No"
+    );
     for (const note of deMinimis.notes) {
       wrappedBody(ctx, note, 105, { size: 8.5, color: BRAND.gray });
     }
@@ -72,8 +86,8 @@ export async function generateAuditWorksheetPDF(
     ctx.y -= 4;
   }
 
+  ensureSpace(ctx, 64, "OrigynLX");
   heading(ctx, "Bill of materials");
-  ensureSpace(ctx, 34, "OrigynLX");
   const colDesc = MARGIN;
   const colHs = MARGIN + 230;
   const colOrigin = MARGIN + 328;
@@ -97,7 +111,8 @@ export async function generateAuditWorksheetPDF(
     ctx.page.drawText(item.hsCode || "-", { x: colHs, y: ctx.y, size: 8.5, font: ctx.fonts.mono, color: BRAND.ink });
     ctx.page.drawText(item.countryOfOrigin || "-", { x: colOrigin, y: ctx.y, size: 8.5, font: ctx.fonts.regular, color: BRAND.ink });
     ctx.page.drawText("$" + item.value.toLocaleString("en-US"), { x: colValue, y: ctx.y, size: 8.5, font: ctx.fonts.regular, color: BRAND.ink });
-    ctx.page.drawText(item.originating ? "Yes" : "No", { x: colStatus, y: ctx.y, size: 8.5, font: ctx.fonts.regular, color: item.originating ? BRAND.pass : BRAND.fail });
+    const undet = item.originStatus === "undetermined";
+    ctx.page.drawText(undet ? "Undet." : item.originating ? "Yes" : "No", { x: colStatus, y: ctx.y, size: 8.5, font: ctx.fonts.regular, color: undet ? BRAND.gray : item.originating ? BRAND.pass : BRAND.fail });
     ctx.y -= 15;
   });
 

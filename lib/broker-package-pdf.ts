@@ -58,11 +58,15 @@ export async function generateBrokerPackagePDF(input: BrokerPackageInput): Promi
   keyLine(ctx, "Originating value", "$" + input.result.originatingValue.toLocaleString("en-US"));
   keyLine(ctx, "Non-originating value", "$" + input.result.nonOriginatingValue.toLocaleString("en-US"));
   ensureSpace(ctx, 26, "OrigynLX");
-  statusBadge(ctx, input.result.qualifies);
-  ctx.page.drawText(
-    "RVC result: " + input.result.rvcPercent + "%   vs   " + input.result.thresholdPercent + "% threshold",
-    { x: MARGIN, y: ctx.y, size: 11, font: ctx.fonts.bold, color: BRAND.ink }
-  );
+  if (input.result.canCalculate === false) {
+    bodyText(ctx, "CANNOT CALCULATE: " + (input.result.invalidReason || "the entered figures do not support an RVC result."), { size: 10.5, color: BRAND.fail });
+  } else {
+    statusBadge(ctx, input.result.qualifies);
+    ctx.page.drawText(
+      "RVC result: " + input.result.rvcPercent + "%   vs   " + input.result.thresholdPercent + "% threshold",
+      { x: MARGIN, y: ctx.y, size: 11, font: ctx.fonts.bold, color: BRAND.ink }
+    );
+  }
   ctx.y -= 17;
   bodyText(
     ctx,
@@ -100,14 +104,22 @@ export async function generateBrokerPackagePDF(input: BrokerPackageInput): Promi
   if (input.deMinimis) {
     heading(ctx, "De minimis reference (Article 4.12)");
     keyLine(ctx, "Non-originating % of value", input.deMinimis.nonOriginatingPercent + "% (reference limit 10%)");
-    keyLine(ctx, "Within de minimis", input.deMinimis.withinDeMinimis ? "Yes" : "No");
+    keyLine(
+      ctx,
+      "Within de minimis",
+      input.deMinimis.assessed === false ? "Not assessed - transaction value required" : input.deMinimis.withinDeMinimis ? "Yes" : "No"
+    );
     ctx.y -= 4;
   }
 
   const remedies = flagTradeRemedies({ hsCode: input.hsSubheading, countryOfOrigin: input.productionCountry });
   heading(ctx, "Trade remedies check (survive USMCA)");
   if (remedies.length === 0) {
-    keyLine(ctx, "Section 232/301 flags", "None detected for this HS subheading");
+    keyLine(
+      ctx,
+      "Section 232/301 flags",
+      input.hsSubheading.trim() ? "None detected for this HS subheading" : "Not assessed - HS subheading required"
+    );
     wrappedBody(
       ctx,
       "Section 232 derivative-article lists and country-specific AD/CVD orders are outside this check - confirm the 10-digit HTS against them.",
@@ -130,8 +142,8 @@ export async function generateBrokerPackagePDF(input: BrokerPackageInput): Promi
   }
   ctx.y -= 4;
 
+  ensureSpace(ctx, 64, "OrigynLX");
   heading(ctx, "Bill of materials");
-  ensureSpace(ctx, 34, "OrigynLX");
   const colDesc = MARGIN;
   const colHs = MARGIN + 230;
   const colOrigin = MARGIN + 328;
@@ -154,7 +166,8 @@ export async function generateBrokerPackagePDF(input: BrokerPackageInput): Promi
     ctx.page.drawText(item.hsCode || "-", { x: colHs, y: ctx.y, size: 8.5, font: ctx.fonts.mono, color: BRAND.ink });
     ctx.page.drawText(item.countryOfOrigin || "-", { x: colOrigin, y: ctx.y, size: 8.5, font: ctx.fonts.regular, color: BRAND.ink });
     ctx.page.drawText("$" + item.value.toLocaleString("en-US"), { x: colValue, y: ctx.y, size: 8.5, font: ctx.fonts.regular, color: BRAND.ink });
-    ctx.page.drawText(item.originating ? "Yes" : "No", { x: colStatus, y: ctx.y, size: 8.5, font: ctx.fonts.regular, color: item.originating ? BRAND.pass : BRAND.fail });
+    const undet = item.originStatus === "undetermined";
+    ctx.page.drawText(undet ? "Undet." : item.originating ? "Yes" : "No", { x: colStatus, y: ctx.y, size: 8.5, font: ctx.fonts.regular, color: undet ? BRAND.gray : item.originating ? BRAND.pass : BRAND.fail });
     ctx.y -= 15;
   });
   ctx.y -= 4;
@@ -163,6 +176,12 @@ export async function generateBrokerPackagePDF(input: BrokerPackageInput): Promi
   keyLine(ctx, "Certifier", clip(input.certInfo.certifierName, 45) + " (" + input.certInfo.certifierType + ")");
   keyLine(ctx, "Producer", clip(input.certInfo.producerName, 50) || "Same as certifier");
   keyLine(ctx, "Importer", clip(input.certInfo.importerName, 50));
+  keyLine(ctx, "Goods (description / HS)", clip(input.productName, 45) + " - HS " + (input.hsSubheading || "-"));
+  keyLine(
+    ctx,
+    "Origin criterion",
+    (input.result.basis === "net-cost" ? "RVC (net cost), " : "RVC (transaction value), ") + input.result.thresholdPercent + "% - confirm any tariff shift separately"
+  );
   keyLine(ctx, "Blanket period", (input.certInfo.blanketPeriodStart || "-") + " to " + (input.certInfo.blanketPeriodEnd || "-"));
   ctx.y -= 4;
 
@@ -175,7 +194,7 @@ export async function generateBrokerPackagePDF(input: BrokerPackageInput): Promi
     "De minimis (Article 4.12) assessed where relevant",
     "All nine certification data elements complete",
     "Signature and date present on the executed certification",
-    "Records retained for five years from the date of the certification",
+    "Records kept five years (importers: from date of importation; exporters and producers: from certification)",
     "Section 232/301 and AD/CVD applicability confirmed for the 10-digit HTS",
   ];
   for (const item of checklist) {
@@ -188,7 +207,7 @@ export async function generateBrokerPackagePDF(input: BrokerPackageInput): Promi
 
   wrappedBody(
     ctx,
-    "Prepared by the certifying party using OrigynLX. This package is a work product for review by a licensed customs broker, who retains final authority over any origin determination, classification and certification.",
+    "Prepared by the certifying party using OrigynLX. Responsibility for the origin determination and the certification rests with the certifying party (USMCA Article 5.2); review by a licensed customs broker is recommended before use.",
     105,
     { size: 8.5, color: BRAND.gray }
   );

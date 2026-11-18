@@ -76,7 +76,7 @@ const SECTIONS: { id: string; heading: string; blocks: Block[] }[] = [
         list: [
           "The importer, exporter, or producer may certify, but whoever certifies must hold records that support the claim.",
           "A blanket certification can cover multiple shipments of the same goods for up to 12 months, which is why lapse tracking matters.",
-          "Supporting records must be kept for at least five years after the relevant entry, per Article 5-C of the agreement and US recordkeeping law (19 U.S.C. 1509).",
+          "Supporting records must be kept for at least five years: importers count from the date of importation, exporters and producers from the date of certification (USMCA Article 5.8; US recordkeeping law, 19 U.S.C. 1508).",
           "An unsupported claim is penalty exposure, not a paperwork issue: 19 U.S.C. 1592 reaches negligent and fraudulent origin claims, sometimes years after entry.",
         ],
       },
@@ -126,7 +126,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "How long must I keep USMCA records?",
-    a: "At least five years after the entry or export concerned, per Article 5-C of the agreement and US recordkeeping law. Records must support the origin claim, including the bill of materials, values, and the math behind the determination.",
+    a: "At least five years: importers count from the date of importation, exporters and producers from the date of certification (USMCA Article 5.8; US recordkeeping law, 19 U.S.C. 1508). Records must support the origin claim, including the bill of materials, values, and the math behind the determination.",
   },
 ];
 
